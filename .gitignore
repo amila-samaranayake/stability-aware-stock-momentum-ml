@@ -1,0 +1,21 @@
+# ----------------------
+# Python cache files
+# ----------------------
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ----------------------
+# Virtual Environments
+# ----------------------
+venv/
+.env/
+.venv/
+env/
+ENV/
+
+# ----------------------
+# Environment variables
+# ----------------------
+.env
+.env.*
