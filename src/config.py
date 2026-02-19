@@ -3,7 +3,7 @@
 """
 Global configuration for Stability-Aware Stock Momentum ML project.
 """
-
+from src.tickers_ftse100 import FTSE100_TICKERS
 # =========================
 # DATE CONFIGURATION
 # =========================
@@ -80,11 +80,11 @@ NN_BATCH_SIZE = 64
 # =========================
 
 # Placeholder: will be replaced with actual FTSE 100 ticker list
-TICKERS = [
-    "VOD.L",   # Vodafone
-    "AZN.L",   # AstraZeneca
-    "BP.L",    # BP
-    "HSBA.L",  # HSBC
-    "ULVR.L",  # Unilever
-]
-
+# TICKERS = [
+#     "VOD.L",   # Vodafone
+#     "AZN.L",   # AstraZeneca
+#     "BP.L",    # BP
+#     "HSBA.L",  # HSBC
+#     "ULVR.L",  # Unilever
+# ]
+TICKERS = FTSE100_TICKERS

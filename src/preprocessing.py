@@ -26,7 +26,7 @@ def compute_simple_returns(adj_close: pd.DataFrame) -> pd.DataFrame:
     adj_close: DataFrame with DateTimeIndex and tickers as columns.
     """
     adj_close = adj_close.sort_index()
-    returns = adj_close.pct_change()
+    returns = adj_close.pct_change(fill_method=None)
     return returns
 
 
@@ -40,7 +40,7 @@ def daily_to_monthly_compound(returns_daily: pd.DataFrame) -> pd.DataFrame:
     returns_daily = returns_daily.sort_index()
 
     # Compound within each calendar month
-    monthly = (1.0 + returns_daily).resample("M").prod() - 1.0
+    monthly = (1.0 + returns_daily).resample("ME").prod() - 1.0
     return monthly
 
 
