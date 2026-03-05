@@ -44,6 +44,7 @@ FEATURE_WINDOWS = {
     "lag_1m": 1,
     "lag_3m": 3,
     "lag_6m": 6,
+    "lag_12m": 12,
     "vol_3m": 3,
 }
 
@@ -88,3 +89,8 @@ NN_BATCH_SIZE = 64
 #     "ULVR.L",  # Unilever
 # ]
 TICKERS = FTSE100_TICKERS
+
+RSI_WINDOW_MONTHS = 14
+TARGET_HORIZON_MONTHS = 1
+
+RIDGE_ALPHA = 1.0

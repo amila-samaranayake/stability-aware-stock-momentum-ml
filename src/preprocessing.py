@@ -44,17 +44,45 @@ def daily_to_monthly_compound(returns_daily: pd.DataFrame) -> pd.DataFrame:
     return monthly
 
 
-def drop_tickers_with_missing(
-    df: pd.DataFrame,
-    max_missing_ratio: float = 0.10
-) -> pd.DataFrame:
+# def drop_tickers_with_missing(
+#     df: pd.DataFrame,
+#     max_missing_ratio: float = 0.10
+# ) -> pd.DataFrame:
+#     """
+#     Drop tickers (columns) that have too much missing data.
+#     """
+#     missing_ratio = df.isna().mean()
+#     keep = missing_ratio[missing_ratio <= max_missing_ratio].index.tolist()
+#     return df[keep]
+
+def drop_tickers_with_missing(df: pd.DataFrame, max_missing_ratio: float = 0.10) -> pd.DataFrame:
     """
-    Drop tickers (columns) that have too much missing data.
+    Drop tickers that have:
+    1) all values missing (100% NaN), OR
+    2) missing ratio > max_missing_ratio.
     """
+    # 1) Drop all-null columns first
+    non_all_null = df.columns[df.notna().any(axis=0)]
+    df = df[non_all_null]
+
+    # 2) Drop tickers with too much missing
     missing_ratio = df.isna().mean()
     keep = missing_ratio[missing_ratio <= max_missing_ratio].index.tolist()
     return df[keep]
 
+def drop_tickers_by_monthly_coverage(
+    monthly_returns: pd.DataFrame,
+    train_end_date: str,
+    min_coverage: float = 0.95
+) -> pd.DataFrame:
+    """
+    Keep tickers that have at least `min_coverage` non-NaN months
+    in the TRAINING period (up to train_end_date).
+    """
+    train = monthly_returns.loc[:train_end_date]
+    coverage = train.notna().mean()  # fraction of months available per ticker
+    keep = coverage[coverage >= min_coverage].index.tolist()
+    return monthly_returns[keep]
 
 def fill_small_gaps(df: pd.DataFrame, max_consecutive_nans: int = 1) -> pd.DataFrame:
     """
@@ -113,8 +141,23 @@ def preprocess_prices_to_returns(
     # 2) Monthly returns (compounded)
     returns_monthly = daily_to_monthly_compound(returns_daily)
 
+    all_null = returns_monthly.columns[~returns_monthly.notna().any(axis=0)]
+    print("All-null tickers (monthly):", list(all_null))
+
+    print("Before drop:", returns_monthly.shape)
     # 3) Drop tickers with lots of missing data (on monthly)
     returns_monthly = drop_tickers_with_missing(returns_monthly, max_missing_ratio=max_missing_ratio)
+
+    # 3b) Drop tickers with insufficient MONTHLY history in training period
+    before_cov = returns_monthly.shape
+    returns_monthly = drop_tickers_by_monthly_coverage(
+        monthly_returns=returns_monthly,
+        train_end_date=train_end_date,
+        min_coverage=0.95
+    )
+    print("After coverage filter:", before_cov, "->", returns_monthly.shape)
+
+    print("After drop:", returns_monthly.shape)
 
     # 4) Fill small gaps only (conservative)
     returns_monthly = fill_small_gaps(returns_monthly, max_consecutive_nans=fill_gap_limit)

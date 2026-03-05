@@ -1,79 +1,102 @@
 FTSE100_TICKERS = [
-    "AAL.L",   # Anglo American
-    "ABDN.L",  # Abrdn
-    "ADM.L",   # Admiral Group
-    "AHT.L",   # Ashtead Group
-    "ANTO.L",  # Antofagasta
-    "AUTO.L",  # Auto Trader Group
-    "AV.L",    # Aviva
-    "AZN.L",   # AstraZeneca
-    "BA.L",    # BAE Systems
-    "BARC.L",  # Barclays
-    "BATS.L",  # British American Tobacco
-    "BDEV.L",  # Barratt Developments
-    "BEZ.L",   # Beazley
-    "BKG.L",   # Berkeley Group
-    "BLND.L",  # British Land
-    "BP.L",    # BP
-    "BT-A.L",  # BT Group
-    "BTRW.L",  # Barratt Redrow (if present)
-    "CCH.L",   # Coca-Cola HBC
-    "CPG.L",   # Compass Group
-    "CRDA.L",  # Croda
-    "DCC.L",   # DCC
-    "DGE.L",   # Diageo
-    "ENT.L",   # Entain
-    "EXPN.L",  # Experian
-    "FCIT.L",  # F&C Investment Trust (if present)
-    "FERG.L",  # Ferguson
-    "FLTR.L",  # Flutter Entertainment
-    "FRES.L",  # Fresnillo
-    "GFS.L",   # G4S (if present historically)
-    "GLEN.L",  # Glencore
-    "GSK.L",   # GSK
-    "HLMA.L",  # Halma
-    "HLN.L",   # Haleon
-    "HSBA.L",  # HSBC
-    "IMB.L",   # Imperial Brands
-    "INF.L",   # Informa
-    "ITRK.L",  # Intertek
-    "JD.L",    # JD Sports
-    "KGF.L",   # Kingfisher
-    "LAND.L",  # Land Securities
-    "LGEN.L",  # Legal & General
-    "LLOY.L",  # Lloyds Banking Group
-    "LSEG.L",  # London Stock Exchange Group
-    "MNG.L",   # M&G
-    "MNDI.L",  # Mondi
-    "NG.L",    # National Grid
-    "NXT.L",   # Next
-    "NWG.L",   # NatWest Group
-    "OCDO.L",  # Ocado
-    "PSON.L",  # Pearson
-    "PSN.L",   # Persimmon
-    "PRU.L",   # Prudential
-    "RKT.L",   # Reckitt
-    "RMV.L",   # Rightmove
-    "RR.L",    # Rolls-Royce
-    "RTO.L",   # Rentokil
-    "SBRY.L",  # Sainsbury
-    "SDR.L",   # Schroders
-    "SGE.L",   # Sage
-    "SGRO.L",  # Segro
-    "SHEL.L",  # Shell
-    "SMIN.L",  # Smiths Group
-    "SMT.L",   # Scottish Mortgage
-    "SN.L",    # Smith & Nephew
-    "SPX.L",   # Spirax
-    "SSE.L",   # SSE
-    "STAN.L",  # Standard Chartered
-    "SVT.L",   # Severn Trent
-    "TSCO.L",  # Tesco
-    "TW.L",    # Taylor Wimpey
-    "ULVR.L",  # Unilever
-    "UU.L",    # United Utilities
-    "VOD.L",   # Vodafone
-    "WEIR.L",  # Weir Group
-    "WTB.L",   # Whitbread
-    "WPP.L"    # WPP
+    "MTLN.L",  # METLEN ENERGY & METALS PLC ORD EUR1.00
+    "STJ.L",  # ST.JAMES'S PLACE PLC ORD 15P
+    "RR.L",  # ROLLS-ROYCE HOLDINGS PLC ORD SHS 20P
+    "INF.L",  # INFORMA PLC ORD 0.1P
+    "ENT.L",  # ENTAIN PLC ORD EUR0.01
+    "ITRK.L",  # INTERTEK GROUP PLC ORD 1P
+    "ICG.L",  # ICG PLC ORD 26 1/4P
+    "ANTO.L",  # ANTOFAGASTA PLC ORD 5P
+    "NXT.L",  # NEXT PLC ORD 10P
+    "MRO.L",  # MELROSE INDUSTRIES PLC ORD GBP0.001
+    "PCT.L",  # POLAR CAPITAL TECHNOLOGY TRUST PLC ORD 2.5P
+    "SDLF.L",  # STANDARD LIFE PLC ORD 10P
+    "CTEC.L",  # CONVATEC GROUP PLC ORD 10P
+    "AV.L",  # AVIVA PLC ORD 32 17/19P
+    "IMB.L",  # IMPERIAL BRANDS PLC ORD 10P
+    "HSBA.L",  # HSBC HLDGS PLC ORD $0.50 (UK REG)
+    "SMT.L",  # SCOTTISH MORTGAGE INV TST PLC ORD 5P
+    "MNG.L",  # M&G PLC ORD £0.05
+    "BA.L",  # BAE SYSTEMS PLC ORD 2.5P
+    "III.L",  # 3I GROUP PLC ORD 73 19/22P
+    "LAND.L",  # LAND SECURITIES GROUP PLC ORD 10 2/3P
+    "AAF.L",  # AIRTEL AFRICA PLC ORD USD0.50
+    "STAN.L",  # STANDARD CHARTERED PLC ORD USD0.50
+    "PSON.L",  # PEARSON PLC ORD 25P
+    "IAG.L",  # INTL CONSOLIDATED AIRLINES GROUP SA ORD EUR0.10 (CDI)
+    "IMI.L",  # IMI PLC ORD 28 4/7P
+    "AAL.L",  # ANGLO AMERICAN PLC ORD USD0.623855311355311
+    "BARC.L",  # BARCLAYS PLC ORD 25P
+    "BBOX.L",  # TRITAX BIG BOX REIT PLC ORD 1P
+    "PRU.L",  # PRUDENTIAL PLC ORD 5P
+    "MNDI.L",  # MONDI PLC ORD EUR 0.22
+    "WTB.L",  # WHITBREAD PLC ORD 76 122/153P
+    "BLND.L",  # BRITISH LAND CO PLC ORD 25P
+    "FCIT.L",  # F&C INVESTMENT TRUST PLC ORD 25P
+    "MKS.L",  # MARKS & SPENCER GROUP PLC ORD 1P
+    "LGEN.L",  # LEGAL & GENERAL GROUP PLC ORD 2 1/2P
+    "GAW.L",  # GAMES WORKSHOP GROUP PLC ORD 5P
+    "JD.L",  # JD SPORTS FASHION PLC ORD 0.05P
+    "ALW.L",  # ALLIANCE WITAN PLC ORD 2.5P
+    "SMIN.L",  # SMITHS GROUP PLC ORD 37.5P
+    "HLMA.L",  # HALMA PLC ORD 10P
+    "BRBY.L",  # BURBERRY GROUP PLC ORD 0.05P
+    "NWG.L",  # NATWEST GROUP PLC ORD 107.69P
+    "SBRY.L",  # SAINSBURY(J) PLC ORD 28 4/7P
+    "BAB.L",  # BABCOCK INTERNATIONAL GROUP PLC ORD 60P
+    "LMP.L",  # LONDONMETRIC PROPERTY PLC ORD 10P
+    "BATS.L",  # BRITISH AMERICAN TOBACCO PLC ORD 25P
+    "LLOY.L",  # LLOYDS BANKING GROUP PLC ORD 10P
+    "SSE.L",  # SSE PLC ORD 50P
+    "IHG.L",  # INTERCONTINENTAL HOTELS GROUP PLC ORD 20 340/399P
+    "RIO.L",  # RIO TINTO PLC ORD 10P
+    "LSEG.L",  # LONDON STOCK EXCHANGE GROUP PLC ORD SHS 6 79/86P
+    "UU.L",  # UNITED UTILITIES GROUP PLC ORD 5P
+    "PSH.L",  # PERSHING SQUARE HOLDINGS LTD ORD NPV
+    "SGRO.L",  # SEGRO PLC ORD 10P
+    "ABF.L",  # ASSOCIATED BRITISH FOODS PLC ORD 5 15/22P
+    "AZN.L",  # ASTRAZENECA PLC ORD SHS $0.25
+    "TSCO.L",  # TESCO PLC ORD 6 1/3P
+    "KGF.L",  # KINGFISHER PLC ORD 15 5/7P
+    "SVT.L",  # SEVERN TRENT PLC ORD 97 17/19P
+    "SPX.L",  # SPIRAX GROUP PLC ORD 26 12/13P
+    "VOD.L",  # VODAFONE GROUP PLC ORD USD0.20 20/21
+    "EZJ.L",  # EASYJET PLC ORD 27 2/7P
+    "RMV.L",  # RIGHTMOVE PLC ORD 0.1P
+    "CNA.L",  # CENTRICA PLC ORD 6 14/81P
+    "GLEN.L",  # GLENCORE PLC ORD USD0.01
+    "EXPN.L",  # EXPERIAN PLC ORD USD0.10
+    "CPG.L",  # COMPASS GROUP PLC ORD 11 1/20P
+    "HIK.L",  # HIKMA PHARMACEUTICALS PLC ORD SHS 10P
+    "SDR.L",  # SCHRODERS PLC ORD 20P
+    "DPLM.L",  # DIPLOMA PLC ORD 5P
+    "BKG.L",  # BERKELEY GROUP HOLDINGS (THE) PLC ORD 5.6110477936P
+    "NG.L",  # NATIONAL GRID PLC ORD 12 204/473P
+    "BEZ.L",  # BEAZLEY PLC ORD 5P
+    "HSX.L",  # HISCOX LD ORD 6.5P (DI)
+    "GSK.L",  # GSK PLC ORD 31 1/4P
+    "RTO.L",  # RENTOKIL INITIAL PLC ORD 1P
+    "EDV.L",  # ENDEAVOUR MINING PLC ORD USD0.01
+    "ULVR.L",  # UNILEVER PLC ORD 3.5P
+    "DCC.L",  # DCC PLC ORD EUR0.25 (CDI)
+    "AUTO.L",  # AUTOTRADER GROUP PLC ORD 1P
+    "HLN.L",  # HALEON PLC ORD GBP0.01
+    "CCH.L",  # COCA-COLA HBC AG ORD CHF6.70 (CDI)
+    "ADM.L",  # ADMIRAL GROUP PLC ORD 0.1P
+    "CRDA.L",  # CRODA INTERNATIONAL PLC ORD 10.609756P
+    "FRES.L",  # FRESNILLO PLC ORD USD0.50
+    "BT-A.L",  # BT GROUP PLC ORD 5P
+    "RKT.L",  # RECKITT BENCKISER GROUP PLC ORD 10 5/12P
+    "CCEP.L",  # COCA-COLA EUROPACIFIC PARTNERS PLC ORD EUR0.01 (DI)
+    "BNZL.L",  # BUNZL PLC ORD 32 1/7P
+    "PSN.L",  # PERSIMMON PLC ORD 10P
+    "SHEL.L",  # SHELL PLC ORD EUR0.07
+    "SGE.L",  # THE SAGE GROUP PLC ORD 1 4/77P
+    "HWDN.L",  # HOWDEN JOINERY GROUP PLC ORD 10P
+    "REL.L",  # RELX PLC ORD 14 51/116P
+    "SN.L",  # SMITH & NEPHEW PLC ORD USD0.20
+    "BP.L",  # BP PLC $0.25
+    "DGE.L",  # DIAGEO PLC ORD 28 101/108P
+    "BTRW.L",  # BARRATT REDROW PLC ORD 10P
+    "WEIR.L",  # WEIR GROUP PLC ORD 12.5P
 ]
