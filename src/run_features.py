@@ -50,7 +50,7 @@ def main():
     test_df.to_parquet(OUT_TEST_PATH)
 
     # 7) Report
-    print("✅ ML dataset created successfully")
+    print("=== ML dataset created successfully")
     print("Full ML dataset shape:", ml_dataset.shape)
     print("Train shape (<= 2024):", train_df.shape)
     print("Test shape (2025):", test_df.shape)

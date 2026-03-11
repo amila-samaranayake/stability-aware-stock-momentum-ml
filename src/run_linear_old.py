@@ -3,15 +3,14 @@
 import os
 import json
 import pandas as pd
-import numpy as np
-
-from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src import config
 from src.models.linear import fit_ridge_with_robust_scaler, predict_returns
 from src.strategies.momentum import select_top_assets, build_equal_weight_weights
 from src.evaluation.backtest import compute_portfolio_returns, compute_equity_curve
 from src.evaluation.metrics import summarize_metrics
+from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
+import numpy as np
 
 ML_TRAIN_PATH = "data/processed/ml_train_2015_2024.parquet"
 ML_TEST_PATH = "data/processed/ml_test_2025.parquet"
@@ -24,27 +23,21 @@ METRICS_TRAIN_PATH = os.path.join(RESULTS_DIR, "metrics_train.json")
 METRICS_TEST_PATH = os.path.join(RESULTS_DIR, "metrics_test_2025.json")
 EQUITY_TRAIN_PATH = os.path.join(RESULTS_DIR, "equity_train.csv")
 EQUITY_TEST_PATH = os.path.join(RESULTS_DIR, "equity_test_2025.csv")
-PRED_METRICS_PATH = os.path.join(RESULTS_DIR, "prediction_metrics.json")
 
 
 def predictions_to_weights(pred_long: pd.DataFrame, top_pct: float) -> pd.DataFrame:
     """
     Convert long predictions (index date,ticker) into a weights DataFrame (date x ticker).
     """
+    # Pivot to wide: date x ticker
     pred_wide = pred_long["pred_return"].unstack("ticker").sort_index()
+
+    # Select top assets per date and build equal weights
     selected = select_top_assets(signal=pred_wide, top_pct=top_pct)
     weights = build_equal_weight_weights(selected)
     return weights
 
-
-def regression_prediction_metrics(
-    df_pred: pd.DataFrame,
-    target_col: str,
-    pred_col: str = "pred_return",
-) -> dict:
-    """
-    Regression accuracy metrics for predicted next-month returns.
-    """
+def regression_prediction_metrics(df_pred: pd.DataFrame, target_col: str, pred_col: str = "pred_return") -> dict:
     y_true = df_pred[target_col].to_numpy(dtype=float)
     y_pred = df_pred[pred_col].to_numpy(dtype=float)
 
@@ -52,7 +45,6 @@ def regression_prediction_metrics(
     rmse = np.sqrt(mean_squared_error(y_true, y_pred))
     r2 = r2_score(y_true, y_pred)
 
-    # Directional accuracy: sign(pred) == sign(true)
     dir_acc = float(np.mean(np.sign(y_pred) == np.sign(y_true)))
 
     return {
@@ -63,39 +55,28 @@ def regression_prediction_metrics(
     }
 
 
-def ranking_metrics_by_month(
-    df_pred: pd.DataFrame,
-    target_col: str,
-    pred_col: str = "pred_return",
-    top_pct: float = 0.20,
-) -> dict:
-    """
-    Ranking usefulness metrics:
-    - Spearman rank correlation (avg across months)
-    - Top-k hit rate (avg across months)
-    df_pred must be indexed by (date, ticker).
-    """
+def ranking_metrics_by_month(df_pred: pd.DataFrame, target_col: str, pred_col: str = "pred_return", top_pct: float = 0.20) -> dict:
     if not isinstance(df_pred.index, pd.MultiIndex):
         raise ValueError("df_pred must be indexed by (date, ticker).")
+
+    df = df_pred.copy()
+    df["date"] = df.index.get_level_values("date")
+    df["ticker"] = df.index.get_level_values("ticker")
 
     spearman_list = []
     hitrate_list = []
 
-    # Group by date index level directly (no ambiguity)
-    for dt, g in df_pred.groupby(level="date"):
+    for dt, g in df.groupby("date"):
         if g.shape[0] < 10:
             continue
 
-        # Spearman correlation across tickers for that month
         s = g[[pred_col, target_col]].corr(method="spearman").iloc[0, 1]
         if not np.isnan(s):
             spearman_list.append(float(s))
 
         k = max(1, int(np.ceil(g.shape[0] * top_pct)))
-
-        # g still has index (date, ticker), so use index level "ticker"
-        pred_top = set(g.nlargest(k, pred_col).index.get_level_values("ticker"))
-        true_top = set(g.nlargest(k, target_col).index.get_level_values("ticker"))
+        pred_top = set(g.nlargest(k, pred_col)["ticker"])
+        true_top = set(g.nlargest(k, target_col)["ticker"])
 
         hitrate_list.append(float(len(pred_top.intersection(true_top)) / k))
 
@@ -122,7 +103,7 @@ def main():
         raise ValueError(f"Expected exactly 1 target column, found: {target_cols}")
     target_col = target_cols[0]
 
-    #Define top_pct BEFORE using it anywhere
+    # --- Build portfolios from predictions ---
     top_pct = getattr(config, "TOP_PERCENTAGE", 0.20)
 
     # --- Fit model (train only) ---
@@ -145,6 +126,7 @@ def main():
     rank_train = ranking_metrics_by_month(pred_train, target_col=target_col, pred_col="pred_return", top_pct=top_pct)
     rank_test = ranking_metrics_by_month(pred_test, target_col=target_col, pred_col="pred_return", top_pct=top_pct)
 
+    PRED_METRICS_PATH = os.path.join(RESULTS_DIR, "prediction_metrics.json")
     pred_metrics = {
         "train": {"regression": acc_train, "ranking": rank_train},
         "test_2025": {"regression": acc_test, "ranking": rank_test},
@@ -164,7 +146,9 @@ def main():
     for k, v in rank_test.items():
         print(f"{k}: {v}")
 
-    # --- Build portfolios from predictions ---
+    # # --- Build portfolios from predictions ---
+    # top_pct = getattr(config, "TOP_PERCENTAGE", 0.20)
+
     w_train = predictions_to_weights(pred_train, top_pct=top_pct)
     w_test = predictions_to_weights(pred_test, top_pct=top_pct)
 
@@ -193,13 +177,13 @@ def main():
         json.dump(metrics_test, f, indent=4)
 
     # --- Print ---
-    print("\n=== Ridge experiment saved to:", RESULTS_DIR)
+    print("=== Ridge experiment saved to:", RESULTS_DIR)
 
-    print("\n=== TRAIN STRATEGY METRICS (2015–2024) ===")
+    print("\n=== TRAIN (2015–2024) ===")
     for k, v in metrics_train.items():
         print(f"{k}: {v:.4f}")
 
-    print("\n=== TEST STRATEGY METRICS (2025) ===")
+    print("\n=== TEST (2025) ===")
     for k, v in metrics_test.items():
         print(f"{k}: {v:.4f}")
 
