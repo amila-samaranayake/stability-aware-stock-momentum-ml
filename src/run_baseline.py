@@ -9,6 +9,8 @@ from src.strategies.momentum import build_momentum_portfolio
 from src.evaluation.backtest import compute_portfolio_returns, compute_equity_curve
 from src.evaluation.metrics import summarize_metrics
 
+from src import config
+
 TRAIN_PATH = "data/processed/train_monthly_2015_2024.parquet"
 TEST_PATH = "data/processed/test_monthly_2025.parquet"
 
@@ -24,6 +26,7 @@ def run_momentum(returns_df: pd.DataFrame):
         returns_monthly=returns_df,
         lookback_months=LOOKBACK_MONTHS,
         top_pct=TOP_PERCENTAGE,
+        use_log_returns=config.USE_LOG_RETURNS
     )
     weights = out["weights"]
     port_ret = compute_portfolio_returns(weights, returns_df)

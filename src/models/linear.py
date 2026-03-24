@@ -8,8 +8,9 @@ from typing import Tuple, Optional
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import RobustScaler
+from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.linear_model import Ridge
+from src import config
 
 
 @dataclass
@@ -44,7 +45,12 @@ def fit_ridge_with_robust_scaler(
     """
     X_train, y_train = prepare_xy(train_df, feature_cols, target_col)
 
-    scaler = RobustScaler()
+    # scaler = RobustScaler()
+    if getattr(config, "SCALER_TYPE", "robust").lower() == "standard":
+        scaler = StandardScaler()
+    else:
+        scaler = RobustScaler()
+        
     X_train_scaled = scaler.fit_transform(X_train)
 
     model = Ridge(alpha=alpha, random_state=42)

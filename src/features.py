@@ -80,10 +80,12 @@ def build_lagged_returns(
     returns_monthly: pd.DataFrame,
     lag_months: List[int],
     prefix: str = "ret",
+    use_log_returns: bool = False,
 ) -> pd.DataFrame:
     """
-    Build compounded lagged returns for each window using ONLY past data.
-    Feature at time t uses returns from (t-m ... t-1), so we shift by 1 month.
+    Build compounded lagged returns for each window using ONLY past data (shifted by 1 month).
+    - If use_log_returns=False: compound simple returns over window: Π(1+r)-1
+    - If use_log_returns=True: sum log returns over window: Σ r
     """
     returns_monthly = returns_monthly.sort_index()
     blocks = []
@@ -92,8 +94,11 @@ def build_lagged_returns(
         if m <= 0:
             raise ValueError("lag_months must be positive integers.")
 
-        # Correct compounding on raw returns
-        lag = returns_monthly.rolling(m).apply(_compound_return_from_returns, raw=True)
+        if use_log_returns:
+            lag = returns_monthly.rolling(m).sum()
+        else:
+            lag = returns_monthly.rolling(m).apply(_compound_return_from_returns, raw=True)
+            
         lag = lag.shift(1)  # no look-ahead
         lag.columns = [f"{prefix}_{m}m__{c}" for c in lag.columns]
         blocks.append(lag)
@@ -225,6 +230,7 @@ def build_ml_dataset(
     prices_monthly: Optional[pd.DataFrame],
     spec: FeaturesSpec,
     include_rsi: bool = True,
+    use_log_returns: bool = False,
 ) -> pd.DataFrame:
     """
     Build the ML dataset (Option A regression).
@@ -243,7 +249,12 @@ def build_ml_dataset(
         prices_monthly = prices_monthly.loc[common_idx]
 
     # Features
-    lag_feats = build_lagged_returns(returns_monthly, spec.lag_months, prefix=spec.top_level_prefix_ret)
+    lag_feats = build_lagged_returns(
+        returns_monthly=returns_monthly,
+        lag_months=spec.lag_months,
+        prefix=spec.top_level_prefix_ret,
+        use_log_returns=use_log_returns
+    )
     vol_feat = build_volatility(returns_monthly, spec.vol_months, prefix=spec.top_level_prefix_vol)
 
     features = pd.concat([lag_feats, vol_feat], axis=1)

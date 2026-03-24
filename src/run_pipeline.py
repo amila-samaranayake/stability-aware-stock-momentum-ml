@@ -1,7 +1,7 @@
 # src/run_pipeline.py
 
 from src.config import (
-    TICKERS, START_DATE, END_DATE, TRAIN_END_DATE, TEST_START_DATE
+    TICKERS, START_DATE, END_DATE, TRAIN_END_DATE, TEST_START_DATE, USE_LOG_RETURNS
 )
 from src.data_download import download_adj_close, save_dataframe, print_missing_summary
 from src.preprocessing import preprocess_prices_to_returns, save_dataframe as save_df, basic_sanity_report
@@ -34,6 +34,7 @@ def main():
         test_start_date=TEST_START_DATE,
         max_missing_ratio=0.10,
         fill_gap_limit=1,
+        use_log_returns=USE_LOG_RETURNS
     )
 
     save_df(prep.returns_monthly, RET_MONTHLY_PATH)

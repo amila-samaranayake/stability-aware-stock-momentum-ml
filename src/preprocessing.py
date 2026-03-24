@@ -8,6 +8,8 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
+from yfinance import config
+from src import config
 
 
 @dataclass
@@ -30,19 +32,39 @@ def compute_simple_returns(adj_close: pd.DataFrame) -> pd.DataFrame:
     return returns
 
 
-def daily_to_monthly_compound(returns_daily: pd.DataFrame) -> pd.DataFrame:
+def daily_to_monthly_compound(returns_daily: pd.DataFrame, use_log_returns: bool) -> pd.DataFrame:
     """
     Convert daily returns to monthly returns by compounding:
-    monthly_return = Π(1 + r_daily) - 1 over each month.
+    - Simple returns: compound within month: Π(1+r) - 1
+    - Log returns: sum within month: Σ r
 
     returns_daily: DataFrame of daily returns.
     """
     returns_daily = returns_daily.sort_index()
 
     # Compound within each calendar month
-    monthly = (1.0 + returns_daily).resample("ME").prod() - 1.0
+    if use_log_returns:
+        monthly = returns_daily.resample("ME").sum()
+    else:
+        monthly = (1.0 + returns_daily).resample("ME").prod() - 1.0
+
     return monthly
 
+def compute_returns(adj_close: pd.DataFrame, use_log_returns: bool) -> pd.DataFrame:
+    """
+    Compute daily returns from Adjusted Close prices.
+
+    - Simple returns: (P_t / P_{t-1}) - 1
+    - Log returns: log(P_t) - log(P_{t-1})
+    """
+    adj_close = adj_close.sort_index()
+
+    if use_log_returns:
+        returns = np.log(adj_close).diff()
+    else:
+        returns = adj_close.pct_change(fill_method=None)
+
+    return returns
 
 # def drop_tickers_with_missing(
 #     df: pd.DataFrame,
@@ -125,7 +147,8 @@ def preprocess_prices_to_returns(
     train_end_date: str,
     test_start_date: str,
     max_missing_ratio: float = 0.10,
-    fill_gap_limit: int = 1
+    fill_gap_limit: int = 1,
+    use_log_returns: bool = False
 ) -> PreprocessResult:
     """
     Full preprocessing pipeline:
@@ -136,10 +159,11 @@ def preprocess_prices_to_returns(
     5) Split train/test by date
     """
     # 1) Daily returns
-    returns_daily = compute_simple_returns(adj_close)
+    # returns_daily = compute_simple_returns(adj_close)
+    returns_daily = compute_returns(adj_close, use_log_returns=use_log_returns)
 
     # 2) Monthly returns (compounded)
-    returns_monthly = daily_to_monthly_compound(returns_daily)
+    returns_monthly = daily_to_monthly_compound(returns_daily, use_log_returns=use_log_returns)
 
     all_null = returns_monthly.columns[~returns_monthly.notna().any(axis=0)]
     print("All-null tickers (monthly):", list(all_null))

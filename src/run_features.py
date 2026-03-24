@@ -3,7 +3,7 @@
 import os
 import pandas as pd
 
-from src.config import TRAIN_END_DATE, TEST_START_DATE
+from src.config import TRAIN_END_DATE, TEST_START_DATE, USE_LOG_RETURNS
 from src.features import (
     spec_from_config,
     compute_monthly_prices_from_adj_close,   # <-- we need this helper; see note below
@@ -35,6 +35,7 @@ def main():
         prices_monthly=prices_monthly,
         spec=spec,
         include_rsi=True,  # uses config window
+        use_log_returns=USE_LOG_RETURNS
     )
 
     # 5) Split train/test by date

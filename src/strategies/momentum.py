@@ -8,21 +8,30 @@ import pandas as pd
 
 def compute_momentum_signal(
     returns_monthly: pd.DataFrame,
-    lookback_months: int = 12
+    lookback_months: int = 12,
+    use_log_returns: bool = False
 ) -> pd.DataFrame:
     """
     Compute momentum signal using past cumulative returns over `lookback_months`.
+
+    - Simple returns: compounded past return Π(1+r) - 1
+    - Log returns: summed past return Σ r
 
     Signal at month t is based ONLY on months (t-lookback_months ... t-1),
     so we shift by 1 to avoid look-ahead bias.
 
     returns_monthly: DataFrame indexed by month-end dates, columns = tickers.
     """
+    returns_monthly = returns_monthly.sort_index()
+
+    if use_log_returns:
+        past_cum = returns_monthly.rolling(window=lookback_months).sum()
     # Use log-style compounding without logs: Π(1+r) - 1
-    past_cum = (1.0 + returns_monthly).rolling(window=lookback_months).apply(
-        lambda x: np.prod(x) - 1.0,
-        raw=True
-    )
+    else:
+        past_cum = (1.0 + returns_monthly).rolling(window=lookback_months).apply(
+            lambda x: np.prod(x) - 1.0,
+            raw=True
+        )
 
     # Shift by 1 month so signal at t uses data up to t-1
     signal = past_cum.shift(1)
@@ -78,7 +87,8 @@ def build_equal_weight_weights(
 def build_momentum_portfolio(
     returns_monthly: pd.DataFrame,
     lookback_months: int = 12,
-    top_pct: float = 0.20
+    top_pct: float = 0.20,
+    use_log_returns: bool = False
 ) -> dict:
     """
     Full momentum pipeline:
@@ -88,7 +98,11 @@ def build_momentum_portfolio(
 
     Returns a dict with signal, selected mask, and weights.
     """
-    signal = compute_momentum_signal(returns_monthly, lookback_months=lookback_months)
+    signal = compute_momentum_signal(
+        returns_monthly,
+        lookback_months=lookback_months,
+        use_log_returns=use_log_returns
+    )
     selected = select_top_assets(signal, top_pct=top_pct)
     weights = build_equal_weight_weights(selected)
 
