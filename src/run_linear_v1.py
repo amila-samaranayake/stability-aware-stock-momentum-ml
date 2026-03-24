@@ -7,7 +7,7 @@ import pandas as pd
 from src import config
 from src.models.linear import fit_ridge_with_robust_scaler, predict_returns
 from src.strategies.momentum import select_top_assets, build_equal_weight_weights
-from src.evaluation.backtest import compute_portfolio_returns, compute_equity_curve
+from evaluation.backtest_v1 import compute_portfolio_returns, compute_equity_curve
 from src.evaluation.metrics import summarize_metrics
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 import numpy as np

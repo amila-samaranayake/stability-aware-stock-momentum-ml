@@ -6,7 +6,7 @@ import pandas as pd
 
 from src.config import LOOKBACK_MONTHS, TOP_PERCENTAGE
 from src.strategies.momentum import build_momentum_portfolio
-from src.evaluation.backtest import compute_portfolio_returns, compute_equity_curve
+from evaluation.backtest_v1 import compute_portfolio_returns, compute_equity_curve
 from src.evaluation.metrics import summarize_metrics
 from src.plotting import plot_equity_curve, plot_drawdown
 from src.evaluation.metrics import turnover
