@@ -57,25 +57,6 @@ USE_LOG_RETURNS = False  # If True, use log returns instead of simple returns
 
 SCALER_TYPE = "robust"  # options: "robust", "standard"
 
-
-# =========================
-# MODEL SETTINGS
-# =========================
-
-MODEL_LIST = [
-    "momentum",
-    "linear",
-    "tree",
-    "neural"
-]
-
-# Neural network settings (keep small to avoid overfitting and complexity)
-NN_HIDDEN_LAYERS = [32, 16]
-NN_DROPOUT = 0.2
-NN_EPOCHS = 100
-NN_BATCH_SIZE = 64
-
-
 # =========================
 # DATA SETTINGS
 # =========================
@@ -95,6 +76,10 @@ TRANSACTION_COST_RATES = [0.0, 0.001, 0.002]
 RSI_WINDOW_MONTHS = 14
 TARGET_HORIZON_MONTHS = 1
 
+# =========================
+# MODEL SETTINGS
+# =========================
+
 RIDGE_ALPHA = 100.0
 RIDGE_ALPHA_GRID = [0.01, 0.1, 1.0, 10.0, 100.0]
 RIDGE_TUNING_SPLITS = 5
@@ -113,3 +98,14 @@ XGB_REG_LAMBDA = 1.0
 RF_N_ESTIMATORS = 300
 RF_MAX_DEPTH = 6
 RF_MIN_SAMPLES_LEAF = 20
+
+NN_LEARNING_RATE = 0.001
+NN_EPOCHS = 100
+NN_BATCH_SIZE = 128
+NN_VALIDATION_FRACTION = 0.15
+NN_EARLY_STOPPING_PATIENCE = 10
+NN_LR_PATIENCE = 5
+NN_L2 = 1e-4
+NN_DROPOUT_1 = 0.20
+NN_DROPOUT_2 = 0.15
+NN_DROPOUT_3 = 0.10
