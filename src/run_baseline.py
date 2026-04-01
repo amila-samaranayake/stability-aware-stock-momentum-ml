@@ -5,7 +5,6 @@ import json
 import pandas as pd
 
 from src import config
-from src.config import LOOKBACK_MONTHS, TOP_PERCENTAGE
 from src.strategies.momentum import build_momentum_portfolio
 from src.evaluation.backtest import (
     compute_portfolio_returns,
@@ -14,11 +13,15 @@ from src.evaluation.backtest import (
 )
 from src.evaluation.metrics import summarize_metrics, turnover
 from src.plotting import plot_equity_curve, plot_drawdown, plot_turnover
+from src.utils.paths import get_processed_returns_paths, get_experiment_dir
 
-TRAIN_PATH = "data/processed/train_monthly_2015_2024.parquet"
-TEST_PATH = "data/processed/test_monthly_2025.parquet"
 
-RESULTS_DIR = "experiments/results/exp01_baseline"
+RETURNS_PATHS = get_processed_returns_paths()
+
+TRAIN_PATH = RETURNS_PATHS["train_monthly"]
+TEST_PATH = RETURNS_PATHS["test_monthly"]
+
+RESULTS_DIR = get_experiment_dir("exp01_baseline", "monthly")
 FIGURES_DIR = os.path.join(RESULTS_DIR, "figures")
 
 METRICS_TRAIN_PATH = os.path.join(RESULTS_DIR, "metrics_train.json")
@@ -34,12 +37,13 @@ WEIGHTS_TEST_PATH = os.path.join(RESULTS_DIR, "weights_test_2025.csv")
 
 def run_momentum(returns_df: pd.DataFrame):
     """
-    Build momentum portfolio, run backtest, and compute gross metrics.
+    Build the baseline momentum portfolio, run the gross backtest,
+    and return metrics, equity curve, weights, and gross returns.
     """
     out = build_momentum_portfolio(
         returns_monthly=returns_df,
-        lookback_months=LOOKBACK_MONTHS,
-        top_pct=TOP_PERCENTAGE,
+        lookback_months=config.LOOKBACK_MONTHS,
+        top_pct=config.TOP_PERCENTAGE,
         use_log_returns=config.USE_LOG_RETURNS,
     )
 
@@ -61,7 +65,7 @@ def compute_cost_adjusted_results(
     weights: pd.DataFrame,
 ):
     """
-    Compute net metrics for each configured transaction cost rate.
+    Compute net performance metrics for each configured transaction cost rate.
     """
     turnover_series = turnover(weights)
     cost_results = {}
@@ -81,15 +85,15 @@ def compute_cost_adjusted_results(
     return turnover_series, cost_results
 
 
-def main():
+def main() -> None:
+    """
+    Run the baseline monthly momentum strategy on train and test periods,
+    save gross and net metrics, and export figures and portfolio outputs.
+    """
     os.makedirs(RESULTS_DIR, exist_ok=True)
     os.makedirs(FIGURES_DIR, exist_ok=True)
 
-    # =========================
-    # TRAIN (2015–2024)
-    # =========================
     returns_train = pd.read_parquet(TRAIN_PATH)
-
     metrics_train, equity_train, weights_train, port_ret_train = run_momentum(returns_train)
 
     equity_train.to_csv(EQUITY_TRAIN_PATH)
@@ -106,7 +110,6 @@ def main():
     with open(METRICS_TRAIN_COSTS_PATH, "w") as f:
         json.dump(cost_results_train, f, indent=4)
 
-    # Plots: gross train
     plot_equity_curve(
         equity_train,
         title="Baseline Momentum Equity Curve (Train 2015–2024)",
@@ -126,9 +129,7 @@ def main():
         label="Baseline Momentum",
     )
 
-    # Optional: plot cost-adjusted train equity curves
     for cost_rate in config.TRANSACTION_COST_RATES:
-        key = f"cost_{int(cost_rate * 10000)}bps"
         net_returns = apply_transaction_costs(port_ret_train, turnover_train, cost_rate)
         net_equity = compute_equity_curve(net_returns)
 
@@ -139,23 +140,17 @@ def main():
             label=f"Baseline Net ({int(cost_rate * 10000)} bps)",
         )
 
-    # =========================
-    # TEST (2025)
-    # =========================
     returns_test = pd.read_parquet(TEST_PATH)
 
-    # Need prior history for momentum signal
     returns_all = pd.concat([returns_train, returns_test]).sort_index()
-
     out_all = build_momentum_portfolio(
         returns_monthly=returns_all,
-        lookback_months=LOOKBACK_MONTHS,
-        top_pct=TOP_PERCENTAGE,
+        lookback_months=config.LOOKBACK_MONTHS,
+        top_pct=config.TOP_PERCENTAGE,
         use_log_returns=config.USE_LOG_RETURNS,
     )
     weights_all = out_all["weights"]
 
-    # Slice 2025 only
     weights_test = weights_all.loc[returns_test.index]
 
     port_ret_test = compute_portfolio_returns(
@@ -180,7 +175,6 @@ def main():
     with open(METRICS_TEST_COSTS_PATH, "w") as f:
         json.dump(cost_results_test, f, indent=4)
 
-    # Plots: gross test
     plot_equity_curve(
         equity_test,
         title="Baseline Momentum Equity Curve (Test 2025)",
@@ -200,9 +194,7 @@ def main():
         label="Baseline Momentum",
     )
 
-    # plot cost-adjusted test equity curves
     for cost_rate in config.TRANSACTION_COST_RATES:
-        key = f"cost_{int(cost_rate * 10000)}bps"
         net_returns = apply_transaction_costs(port_ret_test, turnover_test, cost_rate)
         net_equity = compute_equity_curve(net_returns)
 
@@ -213,9 +205,6 @@ def main():
             label=f"Baseline Net ({int(cost_rate * 10000)} bps)",
         )
 
-    # =========================
-    # PRINT
-    # =========================
     print("Baseline results saved to:", RESULTS_DIR)
 
     print("\n=== TRAIN STRATEGY METRICS (2015–2024) ===")
@@ -227,7 +216,7 @@ def main():
         print(
             k,
             "-> cumulative_return:", round(v["cumulative_return"], 4),
-            "sharpe:", round(v["sharpe_ratio"], 4)
+            "sharpe:", round(v["sharpe_ratio"], 4),
         )
 
     print("\n=== TEST STRATEGY METRICS (2025) ===")
@@ -239,7 +228,7 @@ def main():
         print(
             k,
             "-> cumulative_return:", round(v["cumulative_return"], 4),
-            "sharpe:", round(v["sharpe_ratio"], 4)
+            "sharpe:", round(v["sharpe_ratio"], 4),
         )
 
 

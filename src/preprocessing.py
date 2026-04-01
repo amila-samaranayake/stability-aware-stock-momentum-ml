@@ -8,8 +8,6 @@ from typing import Tuple
 
 import numpy as np
 import pandas as pd
-from yfinance import config
-from src import config
 
 
 @dataclass
@@ -20,42 +18,22 @@ class PreprocessResult:
     test_monthly: pd.DataFrame
 
 
-def compute_simple_returns(adj_close: pd.DataFrame) -> pd.DataFrame:
+def compute_returns(adj_close: pd.DataFrame, use_log_returns: bool = False) -> pd.DataFrame:
     """
-    Compute simple returns from Adjusted Close prices.
-    Return_t = (P_t / P_{t-1}) - 1
+    Compute daily returns from adjusted close prices.
 
-    adj_close: DataFrame with DateTimeIndex and tickers as columns.
-    """
-    adj_close = adj_close.sort_index()
-    returns = adj_close.pct_change(fill_method=None)
-    return returns
+    Parameters
+    ----------
+    adj_close : pd.DataFrame
+        Daily adjusted close prices with DateTimeIndex and tickers as columns.
+    use_log_returns : bool
+        If True, compute log returns.
+        If False, compute simple returns.
 
-
-def daily_to_monthly_compound(returns_daily: pd.DataFrame, use_log_returns: bool) -> pd.DataFrame:
-    """
-    Convert daily returns to monthly returns by compounding:
-    - Simple returns: compound within month: Π(1+r) - 1
-    - Log returns: sum within month: Σ r
-
-    returns_daily: DataFrame of daily returns.
-    """
-    returns_daily = returns_daily.sort_index()
-
-    # Compound within each calendar month
-    if use_log_returns:
-        monthly = returns_daily.resample("ME").sum()
-    else:
-        monthly = (1.0 + returns_daily).resample("ME").prod() - 1.0
-
-    return monthly
-
-def compute_returns(adj_close: pd.DataFrame, use_log_returns: bool) -> pd.DataFrame:
-    """
-    Compute daily returns from Adjusted Close prices.
-
-    - Simple returns: (P_t / P_{t-1}) - 1
-    - Log returns: log(P_t) - log(P_{t-1})
+    Returns
+    -------
+    pd.DataFrame
+        Daily return series.
     """
     adj_close = adj_close.sort_index()
 
@@ -66,31 +44,53 @@ def compute_returns(adj_close: pd.DataFrame, use_log_returns: bool) -> pd.DataFr
 
     return returns
 
-# def drop_tickers_with_missing(
-#     df: pd.DataFrame,
-#     max_missing_ratio: float = 0.10
-# ) -> pd.DataFrame:
-#     """
-#     Drop tickers (columns) that have too much missing data.
-#     """
-#     missing_ratio = df.isna().mean()
-#     keep = missing_ratio[missing_ratio <= max_missing_ratio].index.tolist()
-#     return df[keep]
 
-def drop_tickers_with_missing(df: pd.DataFrame, max_missing_ratio: float = 0.10) -> pd.DataFrame:
+def daily_to_monthly_compound(
+    returns_daily: pd.DataFrame,
+    use_log_returns: bool = False
+) -> pd.DataFrame:
     """
-    Drop tickers that have:
-    1) all values missing (100% NaN), OR
-    2) missing ratio > max_missing_ratio.
+    Convert daily returns to monthly returns.
+
+    Parameters
+    ----------
+    returns_daily : pd.DataFrame
+        Daily return series.
+    use_log_returns : bool
+        If True, sum log returns within month.
+        If False, compound simple returns within month.
+
+    Returns
+    -------
+    pd.DataFrame
+        Monthly return series.
     """
-    # 1) Drop all-null columns first
+    returns_daily = returns_daily.sort_index()
+
+    if use_log_returns:
+        monthly = returns_daily.resample("ME").sum()
+    else:
+        monthly = (1.0 + returns_daily).resample("ME").prod() - 1.0
+
+    return monthly
+
+
+def drop_tickers_with_missing(
+    df: pd.DataFrame,
+    max_missing_ratio: float = 0.10
+) -> pd.DataFrame:
+    """
+    Drop tickers that:
+    1) are entirely missing
+    2) exceed the allowed missing ratio
+    """
     non_all_null = df.columns[df.notna().any(axis=0)]
     df = df[non_all_null]
 
-    # 2) Drop tickers with too much missing
     missing_ratio = df.isna().mean()
     keep = missing_ratio[missing_ratio <= max_missing_ratio].index.tolist()
     return df[keep]
+
 
 def drop_tickers_by_monthly_coverage(
     monthly_returns: pd.DataFrame,
@@ -98,42 +98,54 @@ def drop_tickers_by_monthly_coverage(
     min_coverage: float = 0.95
 ) -> pd.DataFrame:
     """
-    Keep tickers that have at least `min_coverage` non-NaN months
-    in the TRAINING period (up to train_end_date).
+    Keep tickers with sufficient monthly coverage in the training period.
     """
     train = monthly_returns.loc[:train_end_date]
-    coverage = train.notna().mean()  # fraction of months available per ticker
+    coverage = train.notna().mean()
     keep = coverage[coverage >= min_coverage].index.tolist()
     return monthly_returns[keep]
 
-def fill_small_gaps(df: pd.DataFrame, max_consecutive_nans: int = 1) -> pd.DataFrame:
+
+def fill_small_gaps(
+    df: pd.DataFrame,
+    max_consecutive_nans: int = 1
+) -> pd.DataFrame:
     """
-    Fill small gaps only (to avoid inventing data).
-    - Forward-fill up to `max_consecutive_nans` consecutive NaNs.
+    Forward-fill only small gaps to avoid inventing too much data.
     """
-    # limit=1 means fill at most 1 NaN in a row
     return df.ffill(limit=max_consecutive_nans)
 
 
 def split_train_test_by_date(
-    monthly_returns: pd.DataFrame,
+    df: pd.DataFrame,
     train_end_date: str,
     test_start_date: str
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Split monthly returns into train and test using date boundaries.
+    Split dataframe into train and test by date.
+
+    Supports:
+    - DatetimeIndex
+    - MultiIndex with first level named 'date'
     """
-    monthly_returns = monthly_returns.sort_index()
-    train = monthly_returns.loc[:train_end_date].copy()
-    test = monthly_returns.loc[test_start_date:].copy()
+    if isinstance(df.index, pd.MultiIndex):
+        dates = pd.to_datetime(df.index.get_level_values("date"))
+        train = df[dates <= pd.Timestamp(train_end_date)].copy()
+        test = df[dates >= pd.Timestamp(test_start_date)].copy()
+    else:
+        df = df.sort_index()
+        train = df.loc[:train_end_date].copy()
+        test = df.loc[test_start_date:].copy()
+
     return train, test
 
 
 def save_dataframe(df: pd.DataFrame, filepath: str) -> None:
     """
-    Save dataframe to parquet or csv.
+    Save dataframe to parquet or csv depending on file extension.
     """
     os.makedirs(os.path.dirname(filepath), exist_ok=True)
+
     if filepath.endswith(".parquet"):
         df.to_parquet(filepath)
     elif filepath.endswith(".csv"):
@@ -151,67 +163,70 @@ def preprocess_prices_to_returns(
     use_log_returns: bool = False
 ) -> PreprocessResult:
     """
-    Full preprocessing pipeline:
-    1) Daily simple returns
-    2) Monthly compounded returns
-    3) Drop tickers with too many missing values
-    4) Fill small gaps (optional, conservative)
-    5) Split train/test by date
-    """
-    # 1) Daily returns
-    # returns_daily = compute_simple_returns(adj_close)
-    returns_daily = compute_returns(adj_close, use_log_returns=use_log_returns)
+    Monthly benchmark preprocessing pipeline.
 
-    # 2) Monthly returns (compounded)
-    returns_monthly = daily_to_monthly_compound(returns_daily, use_log_returns=use_log_returns)
+    Steps
+    -----
+    1) Compute daily returns
+    2) Convert daily returns to monthly returns
+    3) Drop tickers with excessive missingness
+    4) Drop tickers with insufficient monthly history in train period
+    5) Fill only very small gaps
+    6) Split into train and test monthly data
+    """
+    returns_daily = compute_returns(adj_close, use_log_returns=use_log_returns)
+    returns_monthly = daily_to_monthly_compound(
+        returns_daily,
+        use_log_returns=use_log_returns,
+    )
 
     all_null = returns_monthly.columns[~returns_monthly.notna().any(axis=0)]
     print("All-null tickers (monthly):", list(all_null))
 
-    print("Before drop:", returns_monthly.shape)
-    # 3) Drop tickers with lots of missing data (on monthly)
-    returns_monthly = drop_tickers_with_missing(returns_monthly, max_missing_ratio=max_missing_ratio)
+    print("Before missing filter:", returns_monthly.shape)
+    returns_monthly = drop_tickers_with_missing(
+        returns_monthly,
+        max_missing_ratio=max_missing_ratio,
+    )
 
-    # 3b) Drop tickers with insufficient MONTHLY history in training period
     before_cov = returns_monthly.shape
     returns_monthly = drop_tickers_by_monthly_coverage(
         monthly_returns=returns_monthly,
         train_end_date=train_end_date,
-        min_coverage=0.95
+        min_coverage=0.95,
     )
     print("After coverage filter:", before_cov, "->", returns_monthly.shape)
 
-    print("After drop:", returns_monthly.shape)
+    returns_monthly = fill_small_gaps(
+        returns_monthly,
+        max_consecutive_nans=fill_gap_limit,
+    )
 
-    # 4) Fill small gaps only (conservative)
-    returns_monthly = fill_small_gaps(returns_monthly, max_consecutive_nans=fill_gap_limit)
-
-    # 5) Split
     train_monthly, test_monthly = split_train_test_by_date(
-        returns_monthly, train_end_date=train_end_date, test_start_date=test_start_date
+        returns_monthly,
+        train_end_date=train_end_date,
+        test_start_date=test_start_date,
     )
 
     return PreprocessResult(
         returns_daily=returns_daily,
         returns_monthly=returns_monthly,
         train_monthly=train_monthly,
-        test_monthly=test_monthly
+        test_monthly=test_monthly,
     )
 
 
 def basic_sanity_report(monthly_returns: pd.DataFrame) -> None:
     """
-    Quick sanity checks to catch obvious issues early.
+    Quick sanity checks for monthly return data.
     """
     print("Monthly returns shape:", monthly_returns.shape)
     print("Date range:", monthly_returns.index.min(), "->", monthly_returns.index.max())
 
-    # Check typical magnitude (returns should not be huge regularly)
     desc = monthly_returns.stack().describe(percentiles=[0.01, 0.05, 0.95, 0.99])
-    print("\nMonthly returns distribution (stacked across tickers):")
+    print("\nMonthly returns distribution:")
     print(desc)
 
-    # Missingness
     missing = monthly_returns.isna().mean().sort_values(ascending=False)
     print("\nMissing ratio (top 10):")
     print(missing.head(10))

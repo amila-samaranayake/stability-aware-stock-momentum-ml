@@ -8,7 +8,7 @@ import numpy as np
 from sklearn.metrics import mean_absolute_error, mean_squared_error, r2_score
 
 from src import config
-from src.models.tree import fit_random_forest_with_scaler, predict_returns
+from src.models.tree import fit_random_forest, predict_returns
 from src.strategies.momentum import select_top_assets, build_equal_weight_weights
 from src.evaluation.backtest import (
     compute_portfolio_returns,
@@ -16,14 +16,24 @@ from src.evaluation.backtest import (
     apply_transaction_costs,
 )
 from src.evaluation.metrics import summarize_metrics, turnover
+from src.utils.paths import (
+    get_feature_dataset_paths,
+    get_processed_returns_paths,
+    get_experiment_dir,
+)
 
-ML_TRAIN_PATH = "data/processed/ml_train_2015_2024.parquet"
-ML_TEST_PATH = "data/processed/ml_test_2025.parquet"
 
-RET_TRAIN_PATH = "data/processed/train_monthly_2015_2024.parquet"
-RET_TEST_PATH = "data/processed/test_monthly_2025.parquet"
+FEATURE_DATASET_PATHS = get_feature_dataset_paths(config.FEATURE_SOURCE)
+RETURNS_PATHS = get_processed_returns_paths()
 
-RESULTS_DIR = "experiments/results/exp04_random_forest"
+ML_TRAIN_PATH = FEATURE_DATASET_PATHS["train"]
+ML_TEST_PATH = FEATURE_DATASET_PATHS["test"]
+
+RET_TRAIN_PATH = RETURNS_PATHS["train_monthly"]
+RET_TEST_PATH = RETURNS_PATHS["test_monthly"]
+
+RESULTS_DIR = get_experiment_dir("exp04_random_forest", config.FEATURE_SOURCE)
+
 METRICS_TRAIN_PATH = os.path.join(RESULTS_DIR, "metrics_train.json")
 METRICS_TEST_PATH = os.path.join(RESULTS_DIR, "metrics_test_2025.json")
 METRICS_TRAIN_COSTS_PATH = os.path.join(RESULTS_DIR, "metrics_train_with_costs.json")
@@ -32,13 +42,16 @@ METRICS_TEST_COSTS_PATH = os.path.join(RESULTS_DIR, "metrics_test_2025_with_cost
 EQUITY_TRAIN_PATH = os.path.join(RESULTS_DIR, "equity_train.csv")
 EQUITY_TEST_PATH = os.path.join(RESULTS_DIR, "equity_test_2025.csv")
 PRED_METRICS_PATH = os.path.join(RESULTS_DIR, "prediction_metrics.json")
+FEATURE_IMPORTANCE_PATH = os.path.join(RESULTS_DIR, "feature_importance.csv")
 
 
 def predictions_to_weights(pred_long: pd.DataFrame, top_pct: float) -> pd.DataFrame:
+    """
+    Convert long predictions into equal-weight portfolio weights.
+    """
     pred_wide = pred_long["pred_return"].unstack("ticker").sort_index()
     selected = select_top_assets(signal=pred_wide, top_pct=top_pct)
-    weights = build_equal_weight_weights(selected)
-    return weights
+    return build_equal_weight_weights(selected)
 
 
 def regression_prediction_metrics(
@@ -46,6 +59,9 @@ def regression_prediction_metrics(
     target_col: str,
     pred_col: str = "pred_return",
 ) -> dict:
+    """
+    Compute regression-style prediction metrics.
+    """
     y_true = df_pred[target_col].to_numpy(dtype=float)
     y_pred = df_pred[pred_col].to_numpy(dtype=float)
 
@@ -68,23 +84,26 @@ def ranking_metrics_by_month(
     pred_col: str = "pred_return",
     top_pct: float = 0.20,
 ) -> dict:
+    """
+    Compute ranking metrics month by month.
+    """
     if not isinstance(df_pred.index, pd.MultiIndex):
         raise ValueError("df_pred must be indexed by (date, ticker).")
 
     spearman_list = []
     hitrate_list = []
 
-    for _, g in df_pred.groupby(level="date"):
-        if g.shape[0] < 10:
+    for _, group in df_pred.groupby(level="date"):
+        if group.shape[0] < 10:
             continue
 
-        s = g[[pred_col, target_col]].corr(method="spearman").iloc[0, 1]
-        if not np.isnan(s):
-            spearman_list.append(float(s))
+        spearman = group[[pred_col, target_col]].corr(method="spearman").iloc[0, 1]
+        if not np.isnan(spearman):
+            spearman_list.append(float(spearman))
 
-        k = max(1, int(np.ceil(g.shape[0] * top_pct)))
-        pred_top = set(g.nlargest(k, pred_col).index.get_level_values("ticker"))
-        true_top = set(g.nlargest(k, target_col).index.get_level_values("ticker"))
+        k = max(1, int(np.ceil(group.shape[0] * top_pct)))
+        pred_top = set(group.nlargest(k, pred_col).index.get_level_values("ticker"))
+        true_top = set(group.nlargest(k, target_col).index.get_level_values("ticker"))
 
         hitrate_list.append(float(len(pred_top.intersection(true_top)) / k))
 
@@ -99,6 +118,9 @@ def compute_cost_adjusted_results(
     gross_returns: pd.Series,
     weights: pd.DataFrame,
 ):
+    """
+    Compute net metrics for each configured transaction cost rate.
+    """
     turnover_series = turnover(weights)
     cost_results = {}
 
@@ -117,7 +139,15 @@ def compute_cost_adjusted_results(
     return turnover_series, cost_results
 
 
-def main():
+def main() -> None:
+    """
+    Run Random Forest on the selected feature dataset, evaluate predictions,
+    backtest the resulting monthly portfolio, and save gross and net outputs.
+    """
+    print(f"Using feature source: {config.FEATURE_SOURCE}")
+    print(f"ML train path: {ML_TRAIN_PATH}")
+    print(f"ML test path: {ML_TEST_PATH}")
+
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     ml_train = pd.read_parquet(ML_TRAIN_PATH)
@@ -126,28 +156,48 @@ def main():
     ret_train = pd.read_parquet(RET_TRAIN_PATH)
     ret_test = pd.read_parquet(RET_TEST_PATH)
 
-    feature_cols = [c for c in ml_train.columns if c.startswith(("ret_", "vol_", "rsi_"))]
     target_cols = [c for c in ml_train.columns if c.startswith("y_next")]
     if len(target_cols) != 1:
         raise ValueError(f"Expected exactly 1 target column, found: {target_cols}")
     target_col = target_cols[0]
 
+    feature_cols = [c for c in ml_train.columns if c != target_col]
     top_pct = getattr(config, "TOP_PERCENTAGE", 0.20)
 
-    artifacts = fit_random_forest_with_scaler(
+    artifacts = fit_random_forest(
         train_df=ml_train,
         feature_cols=feature_cols,
         target_col=target_col,
     )
 
+    artifacts.feature_importances_.to_csv(FEATURE_IMPORTANCE_PATH, header=True)
+
     pred_train = predict_returns(artifacts, ml_train, pred_col="pred_return")
     pred_test = predict_returns(artifacts, ml_test, pred_col="pred_return")
 
-    acc_train = regression_prediction_metrics(pred_train, target_col=target_col, pred_col="pred_return")
-    acc_test = regression_prediction_metrics(pred_test, target_col=target_col, pred_col="pred_return")
+    acc_train = regression_prediction_metrics(
+        pred_train,
+        target_col=target_col,
+        pred_col="pred_return",
+    )
+    acc_test = regression_prediction_metrics(
+        pred_test,
+        target_col=target_col,
+        pred_col="pred_return",
+    )
 
-    rank_train = ranking_metrics_by_month(pred_train, target_col=target_col, pred_col="pred_return", top_pct=top_pct)
-    rank_test = ranking_metrics_by_month(pred_test, target_col=target_col, pred_col="pred_return", top_pct=top_pct)
+    rank_train = ranking_metrics_by_month(
+        pred_train,
+        target_col=target_col,
+        pred_col="pred_return",
+        top_pct=top_pct,
+    )
+    rank_test = ranking_metrics_by_month(
+        pred_test,
+        target_col=target_col,
+        pred_col="pred_return",
+        top_pct=top_pct,
+    )
 
     pred_metrics = {
         "train": {"regression": acc_train, "ranking": rank_train},
@@ -175,12 +225,16 @@ def main():
     w_test = w_test[ret_test.columns.intersection(w_test.columns)]
 
     port_ret_train = compute_portfolio_returns(
-        w_train, ret_train, use_log_returns=config.USE_LOG_RETURNS
+        w_train,
+        ret_train,
+        use_log_returns=config.USE_LOG_RETURNS,
     )
     equity_train = compute_equity_curve(port_ret_train)
 
     port_ret_test = compute_portfolio_returns(
-        w_test, ret_test, use_log_returns=config.USE_LOG_RETURNS
+        w_test,
+        ret_test,
+        use_log_returns=config.USE_LOG_RETURNS,
     )
     equity_test = compute_equity_curve(port_ret_test)
 
@@ -220,7 +274,7 @@ def main():
         print(
             k,
             "-> cumulative_return:", round(v["cumulative_return"], 4),
-            "sharpe:", round(v["sharpe_ratio"], 4)
+            "sharpe:", round(v["sharpe_ratio"], 4),
         )
 
     print("\n=== TEST STRATEGY METRICS (2025) ===")
@@ -232,7 +286,7 @@ def main():
         print(
             k,
             "-> cumulative_return:", round(v["cumulative_return"], 4),
-            "sharpe:", round(v["sharpe_ratio"], 4)
+            "sharpe:", round(v["sharpe_ratio"], 4),
         )
 
 

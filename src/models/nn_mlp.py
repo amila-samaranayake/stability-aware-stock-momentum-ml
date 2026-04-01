@@ -1,4 +1,3 @@
-
 # src/models/nn_mlp.py
 
 from __future__ import annotations
@@ -18,6 +17,9 @@ from src import config
 
 @dataclass
 class MLPArtifacts:
+    """
+    Container for fitted MLP artifacts.
+    """
     scaler: object
     model: keras.Model
     feature_cols: list[str]
@@ -30,22 +32,31 @@ def prepare_xy(
     feature_cols: list[str],
     target_col: str,
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Convert a long ML dataframe into feature matrix X and target vector y.
+    """
     X = df_long[feature_cols].to_numpy(dtype=float)
     y = df_long[target_col].to_numpy(dtype=float)
     return X, y
 
 
 def build_mlp_regressor(input_dim: int) -> keras.Model:
+    """
+    Build the configured MLP regression model.
+    """
     l2_value = getattr(config, "NN_L2", 1e-4)
     dropout_1 = getattr(config, "NN_DROPOUT_1", 0.20)
     dropout_2 = getattr(config, "NN_DROPOUT_2", 0.15)
     dropout_3 = getattr(config, "NN_DROPOUT_3", 0.10)
 
+    hidden_1 = getattr(config, "NN_HIDDEN_1", 64)
+    hidden_2 = getattr(config, "NN_HIDDEN_2", 32)
+    hidden_3 = getattr(config, "NN_HIDDEN_3", 16)
+
     model = keras.Sequential([
         layers.Input(shape=(input_dim,)),
-
         layers.Dense(
-            64,
+            hidden_1,
             activation="relu",
             kernel_regularizer=regularizers.l2(l2_value),
         ),
@@ -53,7 +64,7 @@ def build_mlp_regressor(input_dim: int) -> keras.Model:
         layers.Dropout(dropout_1),
 
         layers.Dense(
-            32,
+            hidden_2,
             activation="relu",
             kernel_regularizer=regularizers.l2(l2_value),
         ),
@@ -61,7 +72,7 @@ def build_mlp_regressor(input_dim: int) -> keras.Model:
         layers.Dropout(dropout_2),
 
         layers.Dense(
-            16,
+            hidden_3,
             activation="relu",
             kernel_regularizer=regularizers.l2(l2_value),
         ),
@@ -70,8 +81,9 @@ def build_mlp_regressor(input_dim: int) -> keras.Model:
         layers.Dense(1, activation="linear"),
     ])
 
-    learning_rate = getattr(config, "NN_LEARNING_RATE", 1e-3)
-    optimizer = keras.optimizers.Adam(learning_rate=learning_rate)
+    optimizer = keras.optimizers.Adam(
+        learning_rate=getattr(config, "NN_LEARNING_RATE", 1e-3)
+    )
 
     model.compile(
         optimizer=optimizer,
@@ -86,6 +98,9 @@ def fit_mlp_with_scaler(
     feature_cols: list[str],
     target_col: str,
 ) -> MLPArtifacts:
+    """
+    Fit the scaler and MLP model using a time-aware validation split.
+    """
     X_train, y_train = prepare_xy(train_df, feature_cols, target_col)
 
     scaler_type = getattr(config, "SCALER_TYPE", "robust").lower()
@@ -96,10 +111,9 @@ def fit_mlp_with_scaler(
 
     X_train_scaled = scaler.fit_transform(X_train)
 
-    # Time-aware validation split: last part of training data as validation
     val_fraction = getattr(config, "NN_VALIDATION_FRACTION", 0.15)
-    n = len(X_train_scaled)
-    split_idx = int(n * (1 - val_fraction))
+    n_rows = len(X_train_scaled)
+    split_idx = int(n_rows * (1 - val_fraction))
 
     X_tr = X_train_scaled[:split_idx]
     y_tr = y_train[:split_idx]
@@ -147,6 +161,9 @@ def predict_returns(
     df_long: pd.DataFrame,
     pred_col: str = "pred_return",
 ) -> pd.DataFrame:
+    """
+    Predict returns for each row of a long ML dataframe.
+    """
     X, _ = prepare_xy(df_long, artifacts.feature_cols, artifacts.target_col)
     X_scaled = artifacts.scaler.transform(X)
     preds = artifacts.model.predict(X_scaled, verbose=0).reshape(-1)

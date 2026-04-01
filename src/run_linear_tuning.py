@@ -8,17 +8,24 @@ import pandas as pd
 from sklearn.metrics import mean_squared_error
 
 from src import config
-from src.models.linear import fit_ridge_with_robust_scaler, predict_returns
+from src.models.linear import fit_ridge_with_scaler, predict_returns
+from src.utils.paths import get_feature_dataset_paths, get_experiment_dir
 
-ML_TRAIN_PATH = "data/processed/ml_train_2015_2024.parquet"
 
-RESULTS_DIR = "experiments/results/exp02_linear_ridge_tuning"
+FEATURE_DATASET_PATHS = get_feature_dataset_paths(config.FEATURE_SOURCE)
+
+ML_TRAIN_PATH = FEATURE_DATASET_PATHS["train"]
+
+RESULTS_DIR = get_experiment_dir("exp02_linear_ridge_tuning", config.FEATURE_SOURCE)
 FOLD_RESULTS_PATH = os.path.join(RESULTS_DIR, "ridge_tuning_fold_results.csv")
 SUMMARY_RESULTS_PATH = os.path.join(RESULTS_DIR, "ridge_tuning_summary.csv")
 BEST_PARAMS_PATH = os.path.join(RESULTS_DIR, "best_ridge_params.json")
 
 
 def directional_accuracy(y_true: np.ndarray, y_pred: np.ndarray) -> float:
+    """
+    Compute sign-based directional accuracy.
+    """
     return float(np.mean(np.sign(y_pred) == np.sign(y_true)))
 
 
@@ -29,10 +36,7 @@ def ranking_metrics_by_month(
     top_pct: float = 0.20,
 ) -> dict:
     """
-    Ranking usefulness metrics:
-    - Spearman rank correlation (avg across months)
-    - Top-k hit rate (avg across months)
-    df_pred must be indexed by (date, ticker).
+    Compute ranking metrics month by month.
     """
     if not isinstance(df_pred.index, pd.MultiIndex):
         raise ValueError("df_pred must be indexed by (date, ticker).")
@@ -40,17 +44,17 @@ def ranking_metrics_by_month(
     spearman_list = []
     hitrate_list = []
 
-    for _, g in df_pred.groupby(level="date"):
-        if g.shape[0] < 10:
+    for _, group in df_pred.groupby(level="date"):
+        if group.shape[0] < 10:
             continue
 
-        s = g[[pred_col, target_col]].corr(method="spearman").iloc[0, 1]
-        if not np.isnan(s):
-            spearman_list.append(float(s))
+        spearman = group[[pred_col, target_col]].corr(method="spearman").iloc[0, 1]
+        if not np.isnan(spearman):
+            spearman_list.append(float(spearman))
 
-        k = max(1, int(np.ceil(g.shape[0] * top_pct)))
-        pred_top = set(g.nlargest(k, pred_col).index.get_level_values("ticker"))
-        true_top = set(g.nlargest(k, target_col).index.get_level_values("ticker"))
+        k = max(1, int(np.ceil(group.shape[0] * top_pct)))
+        pred_top = set(group.nlargest(k, pred_col).index.get_level_values("ticker"))
+        true_top = set(group.nlargest(k, target_col).index.get_level_values("ticker"))
 
         hitrate_list.append(float(len(pred_top.intersection(true_top)) / k))
 
@@ -66,20 +70,14 @@ def build_time_folds_from_dates(
     n_splits: int = 5,
 ) -> list[tuple[pd.Index, pd.Index]]:
     """
-    Build expanding-window folds using ordered unique monthly dates.
-
-    Example:
-    - Fold 1: train early dates, validate next block
-    - Fold 2: train larger set, validate next block
+    Build expanding-window time-based folds from sorted unique dates.
     """
     unique_dates = pd.to_datetime(unique_dates).sort_values()
     n_dates = len(unique_dates)
 
-    # split dates into n_splits + 1 blocks
-    # first blocks used progressively for training, next block for validation
     fold_size = n_dates // (n_splits + 1)
     if fold_size < 6:
-        raise ValueError("Not enough dates to create stable time-based folds.")
+        raise ValueError("Not enough dates to build stable time-based folds.")
 
     folds = []
     for i in range(1, n_splits + 1):
@@ -99,7 +97,7 @@ def build_time_folds_from_dates(
 
 def select_best_alpha(summary_df: pd.DataFrame, selection_metric: str) -> float:
     """
-    Choose best alpha based on requested metric.
+    Select the best Ridge alpha according to the configured selection metric.
     """
     metric = selection_metric.lower()
 
@@ -110,22 +108,28 @@ def select_best_alpha(summary_df: pd.DataFrame, selection_metric: str) -> float:
     elif metric == "spearman":
         row = summary_df.sort_values("SpearmanRankCorr_mean", ascending=False).iloc[0]
     else:
-        # default: top-k hit rate
         row = summary_df.sort_values("TopKHitRate_mean", ascending=False).iloc[0]
 
     return float(row["alpha"])
 
 
-def main():
+def main() -> None:
+    """
+    Run time-aware Ridge hyperparameter tuning on the selected feature dataset.
+    """
+    print(f"Using feature source: {config.FEATURE_SOURCE}")
+    print(f"ML train path: {ML_TRAIN_PATH}")
+
     os.makedirs(RESULTS_DIR, exist_ok=True)
 
     ml_train = pd.read_parquet(ML_TRAIN_PATH)
 
-    feature_cols = [c for c in ml_train.columns if c.startswith(("ret_", "vol_", "rsi_"))]
     target_cols = [c for c in ml_train.columns if c.startswith("y_next")]
     if len(target_cols) != 1:
         raise ValueError(f"Expected exactly 1 target column, found: {target_cols}")
     target_col = target_cols[0]
+
+    feature_cols = [c for c in ml_train.columns if c != target_col]
 
     alpha_grid = getattr(config, "RIDGE_ALPHA_GRID", [0.01, 0.1, 1.0, 10.0, 100.0])
     n_splits = getattr(config, "RIDGE_TUNING_SPLITS", 5)
@@ -145,7 +149,7 @@ def main():
             fold_train = ml_train.loc[train_mask].copy()
             fold_val = ml_train.loc[val_mask].copy()
 
-            artifacts = fit_ridge_with_robust_scaler(
+            artifacts = fit_ridge_with_scaler(
                 train_df=fold_train,
                 feature_cols=feature_cols,
                 target_col=target_col,
@@ -196,7 +200,6 @@ def main():
         })
     )
 
-    # flatten column names
     summary_df.columns = [
         "alpha",
         "RMSE_mean", "RMSE_std",
@@ -215,12 +218,13 @@ def main():
         "selection_metric": selection_metric,
         "alpha_grid": list(alpha_grid),
         "n_splits": int(n_splits),
+        "feature_source": config.FEATURE_SOURCE,
     }
 
     with open(BEST_PARAMS_PATH, "w") as f:
         json.dump(best_params, f, indent=4)
 
-    print("==Ridge tuning complete==")
+    print("== Ridge tuning complete ==")
     print("Fold results saved to:", FOLD_RESULTS_PATH)
     print("Summary saved to:", SUMMARY_RESULTS_PATH)
     print("Best params saved to:", BEST_PARAMS_PATH)

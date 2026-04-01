@@ -8,7 +8,6 @@ from typing import Tuple
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import RobustScaler, StandardScaler
 from xgboost import XGBRegressor
 
 from src import config
@@ -16,10 +15,13 @@ from src import config
 
 @dataclass
 class XGBoostArtifacts:
-    scaler: object
+    """
+    Container for fitted XGBoost artifacts.
+    """
     model: XGBRegressor
     feature_cols: list[str]
     target_col: str
+    feature_importances_: pd.Series
 
 
 def prepare_xy(
@@ -27,25 +29,23 @@ def prepare_xy(
     feature_cols: list[str],
     target_col: str,
 ) -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Convert a long ML dataframe into feature matrix X and target vector y.
+    """
     X = df_long[feature_cols].to_numpy(dtype=float)
     y = df_long[target_col].to_numpy(dtype=float)
     return X, y
 
 
-def fit_xgboost_with_scaler(
+def fit_xgboost(
     train_df: pd.DataFrame,
     feature_cols: list[str],
     target_col: str,
 ) -> XGBoostArtifacts:
+    """
+    Fit an XGBoost regressor using the configured hyperparameters.
+    """
     X_train, y_train = prepare_xy(train_df, feature_cols, target_col)
-
-    scaler_type = getattr(config, "SCALER_TYPE", "robust").lower()
-    if scaler_type == "standard":
-        scaler = StandardScaler()
-    else:
-        scaler = RobustScaler()
-
-    X_train_scaled = scaler.fit_transform(X_train)
 
     model = XGBRegressor(
         n_estimators=getattr(config, "XGB_N_ESTIMATORS", 300),
@@ -55,18 +55,26 @@ def fit_xgboost_with_scaler(
         colsample_bytree=getattr(config, "XGB_COLSAMPLE_BYTREE", 0.8),
         reg_alpha=getattr(config, "XGB_REG_ALPHA", 0.0),
         reg_lambda=getattr(config, "XGB_REG_LAMBDA", 1.0),
+        min_child_weight=getattr(config, "XGB_MIN_CHILD_WEIGHT", 5),
+        gamma=getattr(config, "XGB_GAMMA", 0.0),
         objective="reg:squarederror",
         random_state=42,
         n_jobs=-1,
     )
 
-    model.fit(X_train_scaled, y_train)
+    model.fit(X_train, y_train)
+
+    feature_importances = pd.Series(
+        model.feature_importances_,
+        index=feature_cols,
+        name="importance",
+    ).sort_values(ascending=False)
 
     return XGBoostArtifacts(
-        scaler=scaler,
         model=model,
         feature_cols=feature_cols,
         target_col=target_col,
+        feature_importances_=feature_importances,
     )
 
 
@@ -75,9 +83,11 @@ def predict_returns(
     df_long: pd.DataFrame,
     pred_col: str = "pred_return",
 ) -> pd.DataFrame:
+    """
+    Predict returns for each row of a long ML dataframe.
+    """
     X, _ = prepare_xy(df_long, artifacts.feature_cols, artifacts.target_col)
-    X_scaled = artifacts.scaler.transform(X)
-    preds = artifacts.model.predict(X_scaled)
+    preds = artifacts.model.predict(X)
 
     out = df_long.copy()
     out[pred_col] = preds

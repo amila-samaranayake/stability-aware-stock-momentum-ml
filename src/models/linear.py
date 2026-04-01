@@ -3,19 +3,23 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Tuple, Optional
+from typing import Tuple
 
 import numpy as np
 import pandas as pd
 
-from sklearn.preprocessing import RobustScaler, StandardScaler
 from sklearn.linear_model import Ridge
+from sklearn.preprocessing import RobustScaler, StandardScaler
+
 from src import config
 
 
 @dataclass
 class LinearModelArtifacts:
-    scaler: RobustScaler
+    """
+    Container for fitted Ridge model artifacts.
+    """
+    scaler: object
     model: Ridge
     feature_cols: list[str]
     target_col: str
@@ -27,30 +31,30 @@ def prepare_xy(
     target_col: str,
 ) -> Tuple[np.ndarray, np.ndarray]:
     """
-    Convert long ML dataset (indexed by date,ticker) to X,y arrays.
+    Convert a long ML dataframe into feature matrix X and target vector y.
     """
     X = df_long[feature_cols].to_numpy(dtype=float)
     y = df_long[target_col].to_numpy(dtype=float)
     return X, y
 
 
-def fit_ridge_with_robust_scaler(
+def fit_ridge_with_scaler(
     train_df: pd.DataFrame,
     feature_cols: list[str],
     target_col: str,
     alpha: float = 1.0,
 ) -> LinearModelArtifacts:
     """
-    Fit RobustScaler on train features ONLY, then fit Ridge regression.
+    Fit a scaler on training features only, then fit Ridge regression.
     """
     X_train, y_train = prepare_xy(train_df, feature_cols, target_col)
 
-    # scaler = RobustScaler()
-    if getattr(config, "SCALER_TYPE", "robust").lower() == "standard":
+    scaler_type = getattr(config, "SCALER_TYPE", "robust").lower()
+    if scaler_type == "standard":
         scaler = StandardScaler()
     else:
         scaler = RobustScaler()
-        
+
     X_train_scaled = scaler.fit_transform(X_train)
 
     model = Ridge(alpha=alpha, random_state=42)
@@ -70,8 +74,7 @@ def predict_returns(
     pred_col: str = "pred_return",
 ) -> pd.DataFrame:
     """
-    Predict next-month returns for each (date,ticker) row.
-    Returns a copy of df_long with an added prediction column.
+    Predict returns for each row of a long ML dataframe.
     """
     X, _ = prepare_xy(df_long, artifacts.feature_cols, artifacts.target_col)
     X_scaled = artifacts.scaler.transform(X)

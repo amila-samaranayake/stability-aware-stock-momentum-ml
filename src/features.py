@@ -9,53 +9,56 @@ import numpy as np
 import pandas as pd
 
 
-# =========================
-# Config container
-# =========================
-
 @dataclass
 class FeaturesSpec:
     """
-    Defines what features/targets to build.
-    All windows are in MONTHS because we use monthly data.
+    Configuration for monthly feature engineering.
+
+    All windows are expressed in months because this pipeline uses
+    month-end prices and monthly returns.
     """
-    lag_months: List[int] = None         # e.g., [1,3,6,12]
-    vol_months: int = 3                  # rolling volatility window
-    rsi_months: int = 14                 # RSI window on monthly prices
-    target_horizon_months: int = 1       # next-month return target
+    lag_months: List[int]
+    vol_months: int = 3
+    rsi_months: int = 14
+    target_horizon_months: int = 1
     top_level_prefix_ret: str = "ret"
     top_level_prefix_vol: str = "vol"
     top_level_prefix_rsi: str = "rsi"
     target_name: str = "y_next"
 
-def compute_monthly_prices_from_adj_close(adj_close_daily: pd.DataFrame, rule: str = "ME") -> pd.DataFrame:
+
+def compute_monthly_prices_from_adj_close(
+    adj_close_daily: pd.DataFrame,
+    rule: str = "ME",
+) -> pd.DataFrame:
+    """
+    Convert daily adjusted close prices to month-end prices.
+    """
     adj_close_daily = adj_close_daily.sort_index()
     return adj_close_daily.resample(rule).last()
 
+
 def spec_from_config() -> FeaturesSpec:
     """
-    Build FeaturesSpec from src/config.py.
-    Keeps feature creation consistent with your project config.
+    Build a FeaturesSpec from src.config so monthly feature creation stays
+    aligned with the project configuration.
     """
     from src import config
 
-    # Lag windows: try to read from FEATURE_WINDOWS keys like lag_1m, lag_3m...
-    lag_months = []
+    lag_months: list[int] = []
     vol_months = 3
 
-    fw = getattr(config, "FEATURE_WINDOWS", {})
-    if isinstance(fw, dict):
-        for k, v in fw.items():
-            if str(k).startswith("lag_"):
-                lag_months.append(int(v))
-            if str(k).startswith("vol_"):
-                vol_months = int(v)
+    feature_windows = getattr(config, "FEATURE_WINDOWS", {})
+    if isinstance(feature_windows, dict):
+        for key, value in feature_windows.items():
+            if str(key).startswith("lag_"):
+                lag_months.append(int(value))
+            elif str(key).startswith("vol_"):
+                vol_months = int(value)
 
-    # Fallback defaults if config not set fully
     if not lag_months:
         lag_months = [1, 3, 6, 12]
 
-    # Optional config fields
     rsi_months = getattr(config, "RSI_WINDOW_MONTHS", 14)
     target_horizon = getattr(config, "TARGET_HORIZON_MONTHS", 1)
 
@@ -67,12 +70,10 @@ def spec_from_config() -> FeaturesSpec:
     )
 
 
-# =========================
-# Feature builders
-# =========================
-
 def _compound_return_from_returns(window: np.ndarray) -> float:
-    """Compounded return over a window: Π(1+r) - 1."""
+    """
+    Compute compounded simple return over a rolling window.
+    """
     return float(np.prod(1.0 + window) - 1.0)
 
 
@@ -83,24 +84,28 @@ def build_lagged_returns(
     use_log_returns: bool = False,
 ) -> pd.DataFrame:
     """
-    Build compounded lagged returns for each window using ONLY past data (shifted by 1 month).
-    - If use_log_returns=False: compound simple returns over window: Π(1+r)-1
-    - If use_log_returns=True: sum log returns over window: Σ r
+    Build lagged return features using only past information.
+
+    If use_log_returns is False, rolling simple returns are compounded.
+    If use_log_returns is True, rolling log returns are summed.
     """
     returns_monthly = returns_monthly.sort_index()
     blocks = []
 
-    for m in lag_months:
-        if m <= 0:
-            raise ValueError("lag_months must be positive integers.")
+    for months in lag_months:
+        if months <= 0:
+            raise ValueError("lag_months must contain positive integers.")
 
         if use_log_returns:
-            lag = returns_monthly.rolling(m).sum()
+            lag = returns_monthly.rolling(months).sum()
         else:
-            lag = returns_monthly.rolling(m).apply(_compound_return_from_returns, raw=True)
-            
-        lag = lag.shift(1)  # no look-ahead
-        lag.columns = [f"{prefix}_{m}m__{c}" for c in lag.columns]
+            lag = returns_monthly.rolling(months).apply(
+                _compound_return_from_returns,
+                raw=True,
+            )
+
+        lag = lag.shift(1)
+        lag.columns = [f"{prefix}_{months}m__{col}" for col in lag.columns]
         blocks.append(lag)
 
     return pd.concat(blocks, axis=1)
@@ -112,14 +117,14 @@ def build_volatility(
     prefix: str = "vol",
 ) -> pd.DataFrame:
     """
-    Rolling volatility (std) of monthly returns, shifted by 1 month (no look-ahead).
+    Build rolling monthly volatility features using past data only.
     """
     if vol_months < 2:
-        raise ValueError("vol_months should be >= 2.")
+        raise ValueError("vol_months must be at least 2.")
 
     returns_monthly = returns_monthly.sort_index()
     vol = returns_monthly.rolling(vol_months).std(ddof=1).shift(1)
-    vol.columns = [f"{prefix}_{vol_months}m__{c}" for c in vol.columns]
+    vol.columns = [f"{prefix}_{vol_months}m__{col}" for col in vol.columns]
     return vol
 
 
@@ -129,11 +134,12 @@ def build_rsi_from_monthly_prices(
     prefix: str = "rsi",
 ) -> pd.DataFrame:
     """
-    RSI computed on monthly prices using Wilder-style EWMA smoothing.
-    Shifted by 1 month to avoid using the current month close for decisions.
+    Build RSI features from monthly prices using Wilder-style smoothing.
+
+    The final feature is shifted by one month to avoid look-ahead bias.
     """
     if rsi_months < 2:
-        raise ValueError("rsi_months should be >= 2.")
+        raise ValueError("rsi_months must be at least 2.")
 
     prices_monthly = prices_monthly.sort_index()
     delta = prices_monthly.diff()
@@ -148,8 +154,8 @@ def build_rsi_from_monthly_prices(
     rs = avg_gain / avg_loss.replace(0.0, np.nan)
     rsi = 100.0 - (100.0 / (1.0 + rs))
 
-    rsi = rsi.shift(1)  # <-- key: no look-ahead
-    rsi.columns = [f"{prefix}_{rsi_months}m__{c}" for c in rsi.columns]
+    rsi = rsi.shift(1)
+    rsi.columns = [f"{prefix}_{rsi_months}m__{col}" for col in rsi.columns]
     return rsi
 
 
@@ -159,20 +165,17 @@ def build_target_next_return(
     target_name: str = "y_next",
 ) -> pd.DataFrame:
     """
-    Target: next-month return (shifted backward).
-    y at time t is return at time t + horizon.
+    Build next-period return target.
+
+    At time t, the target corresponds to the realized return at t + horizon.
     """
     if horizon_months <= 0:
         raise ValueError("horizon_months must be positive.")
 
-    y = returns_monthly.sort_index().shift(-horizon_months)
-    y.columns = [f"{target_name}_{horizon_months}m__{c}" for c in y.columns]
-    return y
+    target = returns_monthly.sort_index().shift(-horizon_months)
+    target.columns = [f"{target_name}_{horizon_months}m__{col}" for col in target.columns]
+    return target
 
-
-# =========================
-# Assemble ML dataset
-# =========================
 
 def wide_to_long(
     features_wide: pd.DataFrame,
@@ -180,49 +183,49 @@ def wide_to_long(
     drop_na: bool = True,
 ) -> pd.DataFrame:
     """
-    Correct conversion from wide to long:
+    Convert wide feature and target matrices to a long ML dataset.
 
-    features_wide columns must be like: "ret_1m__AZN.L"
-    target_wide columns must be like: "y_next_1m__AZN.L"
+    Expected column format:
+    - feature columns: 'feature_name__TICKER'
+    - target columns: 'target_name__TICKER'
 
     Output:
-      index = (date, ticker)
-      columns = feature names + target
+    - MultiIndex index: (date, ticker)
+    - Columns: feature names + target
     """
 
     def to_multiindex(df: pd.DataFrame) -> pd.DataFrame:
-        # Convert "feature__TICKER" columns into MultiIndex (feature, ticker)
-        feats = []
+        feature_names = []
         tickers = []
-        for c in df.columns:
-            feat, tkr = c.split("__", 1)
-            feats.append(feat)
-            tickers.append(tkr)
-        df2 = df.copy()
-        df2.columns = pd.MultiIndex.from_arrays([feats, tickers], names=["feature", "ticker"])
-        return df2
 
-    # 1) Convert to multiindex
-    f_mi = to_multiindex(features_wide)
-    y_mi = to_multiindex(target_wide)
+        for col in df.columns:
+            feature_name, ticker = col.split("__", 1)
+            feature_names.append(feature_name)
+            tickers.append(ticker)
 
-    # 2) Stack ticker level -> rows become (date, ticker)
-    f_long = f_mi.stack(level="ticker", future_stack=True)   # columns now are "feature"
-    y_long = y_mi.stack(level="ticker", future_stack=True)   # columns now are "feature" (target name)
+        out = df.copy()
+        out.columns = pd.MultiIndex.from_arrays(
+            [feature_names, tickers],
+            names=["feature", "ticker"],
+        )
+        return out
 
-    f_long.index.names = ["date", "ticker"]
-    y_long.index.names = ["date", "ticker"]
+    features_mi = to_multiindex(features_wide)
+    target_mi = to_multiindex(target_wide)
 
-    # 3) Join features + target
-    ml = f_long.join(y_long, how="inner")
+    features_long = features_mi.stack(level="ticker", future_stack=True)
+    target_long = target_mi.stack(level="ticker", future_stack=True)
+
+    features_long.index.names = ["date", "ticker"]
+    target_long.index.names = ["date", "ticker"]
+
+    ml_dataset = features_long.join(target_long, how="inner")
 
     if drop_na:
-        ml = ml.dropna(axis=0, how="any")
+        ml_dataset = ml_dataset.dropna(axis=0, how="any")
 
-    # Ensure columns are plain strings
-    ml.columns = [str(c) for c in ml.columns]
-
-    return ml
+    ml_dataset.columns = [str(col) for col in ml_dataset.columns]
+    return ml_dataset
 
 
 def build_ml_dataset(
@@ -233,46 +236,53 @@ def build_ml_dataset(
     use_log_returns: bool = False,
 ) -> pd.DataFrame:
     """
-    Build the ML dataset (Option A regression).
-    returns_monthly: monthly returns (date index, tickers columns)
-    prices_monthly: month-end prices (same tickers) for RSI (optional)
+    Build the monthly-feature ML dataset in long format.
     """
-    # Ensure aligned tickers
     tickers = returns_monthly.columns
+
     if prices_monthly is not None:
-        common = tickers.intersection(prices_monthly.columns)
-        returns_monthly = returns_monthly[common]
-        prices_monthly = prices_monthly[common]
+        common_tickers = tickers.intersection(prices_monthly.columns)
+        returns_monthly = returns_monthly[common_tickers]
+        prices_monthly = prices_monthly[common_tickers]
 
-        common_idx = returns_monthly.index.intersection(prices_monthly.index)
-        returns_monthly = returns_monthly.loc[common_idx]
-        prices_monthly = prices_monthly.loc[common_idx]
+        common_index = returns_monthly.index.intersection(prices_monthly.index)
+        returns_monthly = returns_monthly.loc[common_index]
+        prices_monthly = prices_monthly.loc[common_index]
 
-    # Features
-    lag_feats = build_lagged_returns(
+    lag_features = build_lagged_returns(
         returns_monthly=returns_monthly,
         lag_months=spec.lag_months,
         prefix=spec.top_level_prefix_ret,
-        use_log_returns=use_log_returns
+        use_log_returns=use_log_returns,
     )
-    vol_feat = build_volatility(returns_monthly, spec.vol_months, prefix=spec.top_level_prefix_vol)
 
-    features = pd.concat([lag_feats, vol_feat], axis=1)
+    vol_features = build_volatility(
+        returns_monthly=returns_monthly,
+        vol_months=spec.vol_months,
+        prefix=spec.top_level_prefix_vol,
+    )
+
+    features = pd.concat([lag_features, vol_features], axis=1)
 
     if include_rsi and prices_monthly is not None:
-        rsi_feat = build_rsi_from_monthly_prices(prices_monthly, spec.rsi_months, prefix=spec.top_level_prefix_rsi)
-        features = pd.concat([features, rsi_feat], axis=1)
+        rsi_features = build_rsi_from_monthly_prices(
+            prices_monthly=prices_monthly,
+            rsi_months=spec.rsi_months,
+            prefix=spec.top_level_prefix_rsi,
+        )
+        features = pd.concat([features, rsi_features], axis=1)
 
-    # Target
     target = build_target_next_return(
         returns_monthly=returns_monthly,
         horizon_months=spec.target_horizon_months,
         target_name=spec.target_name,
     )
 
-    # Long table
-    ml = wide_to_long(features_wide=features, target_wide=target, drop_na=True)
-    return ml
+    return wide_to_long(
+        features_wide=features,
+        target_wide=target,
+        drop_na=True,
+    )
 
 
 def split_by_date(
@@ -281,7 +291,7 @@ def split_by_date(
     test_start_date: str,
 ) -> Tuple[pd.DataFrame, pd.DataFrame]:
     """
-    Split ML dataset by date boundaries.
+    Split a long ML dataset by date boundaries.
     """
     dates = ml_dataset.index.get_level_values("date")
     train = ml_dataset.loc[dates <= pd.to_datetime(train_end_date)].copy()

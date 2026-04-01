@@ -1,0 +1,10 @@
+{
+    "cumulative_return": 0.38087005336811575,
+    "annualized_return": 0.38087005336811575,
+    "annualized_volatility": 0.13071250544704005,
+    "max_drawdown": -0.06820708446973589,
+    "sharpe_ratio": 2.5625899167639097,
+    "avg_turnover": 0.13749999999999998,
+    "median_turnover": 0.125,
+    "max_turnover": 0.35
+}
