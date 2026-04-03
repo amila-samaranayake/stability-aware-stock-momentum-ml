@@ -86,13 +86,17 @@ RF_BOOTSTRAP = True
 # =========================
 XGB_N_ESTIMATORS = 300
 XGB_MAX_DEPTH = 4
-XGB_LEARNING_RATE = 0.05
+XGB_LEARNING_RATE = 0.04
 XGB_SUBSAMPLE = 0.8
 XGB_COLSAMPLE_BYTREE = 0.8
 XGB_REG_ALPHA = 0.0
 XGB_REG_LAMBDA = 1.0
 XGB_MIN_CHILD_WEIGHT = 5
 XGB_GAMMA = 0.0
+
+XGB_TUNING_TRIALS = 40
+XGB_TUNING_SPLITS = 5
+XGB_SELECTION_METRIC = "topk_hit_rate"  # options: "topk_hit_rate", "spearman", "directional_accuracy", "rmse"
 
 # =========================
 # MLP

@@ -1,0 +1,26 @@
+{
+    "best_trial_number": 16,
+    "best_objective_value": 0.35051585091598375,
+    "selection_metric": "combined_score",
+    "feature_source": "daily",
+    "n_trials": 40,
+    "n_splits": 5,
+    "best_params": {
+        "XGB_N_ESTIMATORS": 400,
+        "XGB_MAX_DEPTH": 2,
+        "XGB_LEARNING_RATE": 0.014904014108833356,
+        "XGB_SUBSAMPLE": 0.7508037069686584,
+        "XGB_COLSAMPLE_BYTREE": 0.6205915004999957,
+        "XGB_REG_ALPHA": 0.5572929284732229,
+        "XGB_REG_LAMBDA": 4.633063543866615,
+        "XGB_MIN_CHILD_WEIGHT": 8,
+        "XGB_GAMMA": 0.1448948720912231
+    },
+    "best_user_attrs": {
+        "RMSE_mean": 0.08197040252459545,
+        "DirectionalAccuracy_mean": 0.5200613400839014,
+        "SpearmanRankCorr_mean": 0.0028235349150260033,
+        "TopKHitRate_mean": 0.2537719298245614,
+        "CombinedScore_mean": 0.35051585091598375
+    }
+}

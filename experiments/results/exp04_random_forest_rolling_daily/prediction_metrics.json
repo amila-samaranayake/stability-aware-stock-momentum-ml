@@ -1,0 +1,28 @@
+{
+    "train_static_fit": {
+        "regression": {
+            "MAE": 0.05777511222278815,
+            "RMSE": 0.07843286093652155,
+            "R2": 0.07840736859533659,
+            "Directional_Accuracy": 0.5541370704549817
+        },
+        "ranking": {
+            "SpearmanRankCorr_mean": 0.12009657315189899,
+            "TopKHitRate_mean": 0.31393046837276667,
+            "Months_evaluated": 109
+        }
+    },
+    "test_2025_rolling_fit": {
+        "regression": {
+            "MAE": 0.054720998521513936,
+            "RMSE": 0.0736287187307829,
+            "R2": 0.010556183200963964,
+            "Directional_Accuracy": 0.5634765625
+        },
+        "ranking": {
+            "SpearmanRankCorr_mean": 0.07372874496489838,
+            "TopKHitRate_mean": 0.3492822966507177,
+            "Months_evaluated": 11
+        }
+    }
+}
