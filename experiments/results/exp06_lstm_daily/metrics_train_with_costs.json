@@ -1,0 +1,32 @@
+{
+    "cost_0bps": {
+        "cumulative_return": 1.0258185903154389,
+        "annualized_return": 0.07314907414564331,
+        "annualized_volatility": 0.1428043946048094,
+        "max_drawdown": -0.22910956091996193,
+        "sharpe_ratio": 0.5664812862859965,
+        "avg_turnover": 0.734375,
+        "median_turnover": 0.75,
+        "max_turnover": 0.95
+    },
+    "cost_10bps": {
+        "cumulative_return": 0.8666582431631797,
+        "annualized_return": 0.06440395907059115,
+        "annualized_volatility": 0.14276497096889704,
+        "max_drawdown": -0.23104997978389397,
+        "sharpe_ratio": 0.509025544920663,
+        "avg_turnover": 0.734375,
+        "median_turnover": 0.75,
+        "max_turnover": 0.95
+    },
+    "cost_20bps": {
+        "cumulative_return": 0.7198957593013962,
+        "annualized_return": 0.05572355755341607,
+        "annualized_volatility": 0.14272986882476485,
+        "max_drawdown": -0.2329871752252427,
+        "sharpe_ratio": 0.45152439131117245,
+        "avg_turnover": 0.734375,
+        "median_turnover": 0.75,
+        "max_turnover": 0.95
+    }
+}
