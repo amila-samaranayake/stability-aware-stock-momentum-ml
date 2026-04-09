@@ -1,32 +1,32 @@
 {
     "cost_0bps": {
-        "cumulative_return": 9.484153425659606,
-        "annualized_return": 0.2648916824127683,
-        "annualized_volatility": 0.20053382075543602,
-        "max_drawdown": -0.24656255261871307,
-        "sharpe_ratio": 1.276769519965216,
-        "avg_turnover": 0.45137614678899085,
-        "median_turnover": 0.45,
-        "max_turnover": 0.8
+        "cumulative_return": 5.4365424034556264,
+        "annualized_return": 0.20466214520511472,
+        "annualized_volatility": 0.2035784343957871,
+        "max_drawdown": -0.2612388603797646,
+        "sharpe_ratio": 1.0171662836325308,
+        "avg_turnover": 0.38073394495412843,
+        "median_turnover": 0.4,
+        "max_turnover": 0.75
     },
     "cost_10bps": {
-        "cumulative_return": 8.9897854910092,
-        "annualized_return": 0.2587967595983569,
-        "annualized_volatility": 0.20050626033275845,
-        "max_drawdown": -0.24828126446202636,
-        "sharpe_ratio": 1.2524071300614739,
-        "avg_turnover": 0.45137614678899085,
-        "median_turnover": 0.45,
-        "max_turnover": 0.8
+        "cumulative_return": 5.178329567875896,
+        "annualized_return": 0.19973991265364854,
+        "annualized_volatility": 0.20357367540497162,
+        "max_drawdown": -0.26273693864386904,
+        "sharpe_ratio": 0.9968043222603036,
+        "avg_turnover": 0.38073394495412843,
+        "median_turnover": 0.4,
+        "max_turnover": 0.75
     },
     "cost_20bps": {
-        "cumulative_return": 8.5185025233536,
-        "annualized_return": 0.2527282261272732,
-        "annualized_volatility": 0.2004808680538503,
-        "max_drawdown": -0.24999743788774886,
-        "sharpe_ratio": 1.2280247609292039,
-        "avg_turnover": 0.45137614678899085,
-        "median_turnover": 0.45,
-        "max_turnover": 0.8
+        "cumulative_return": 4.930371610621202,
+        "annualized_return": 0.19483570159436248,
+        "annualized_volatility": 0.20357063417031052,
+        "max_drawdown": -0.2642330835049589,
+        "sharpe_ratio": 0.9764331695100723,
+        "avg_turnover": 0.38073394495412843,
+        "median_turnover": 0.4,
+        "max_turnover": 0.75
     }
 }

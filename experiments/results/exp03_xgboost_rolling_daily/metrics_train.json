@@ -1,10 +1,10 @@
 {
-    "cumulative_return": 95.3366348557716,
-    "annualized_return": 0.5789891551464781,
-    "annualized_volatility": 0.20157802972212127,
-    "max_drawdown": -0.18860284444038755,
-    "sharpe_ratio": 2.4014402493851303,
-    "avg_turnover": 0.6678899082568809,
+    "cumulative_return": 68.66708508378123,
+    "annualized_return": 0.5286313566461918,
+    "annualized_volatility": 0.20339354028692871,
+    "max_drawdown": -0.20393558186163685,
+    "sharpe_ratio": 2.2166163429357773,
+    "avg_turnover": 0.6422018348623854,
     "median_turnover": 0.65,
-    "max_turnover": 1.0
+    "max_turnover": 0.95
 }
