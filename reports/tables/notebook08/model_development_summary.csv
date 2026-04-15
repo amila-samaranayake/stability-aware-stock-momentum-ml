@@ -1,0 +1,8 @@
+stage,main_finding
+Baseline momentum,Provided a transparent non-ML benchmark
+Ridge models,Established the first supervised-learning baseline family
+Random Forest models,Delivered the strongest overall out-of-sample results
+XGBoost models,Fit more strongly in-sample but generalized less well than the best RF
+Neural models,Did not outperform the final RF model despite additional flexibility
+OHLCV feature extension,Helped the final RF model most clearly in ranking and portfolio construction
+Tuning studies,Improved understanding of model complexity trade-offs but did not overturn the final RF selection

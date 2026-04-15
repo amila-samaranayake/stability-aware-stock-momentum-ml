@@ -1,0 +1,3 @@
+feature_source,n_features,full_rows,train_rows,test_rows,target_col
+daily,15,11442,10418,1024,y_next_1m
+daily_ohlcv,23,11398,10374,1024,y_next_1m

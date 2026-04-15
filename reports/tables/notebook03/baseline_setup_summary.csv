@@ -1,0 +1,7 @@
+setting,value
+strategy_name,Baseline Momentum
+signal_frequency,monthly
+selection_rule,top stocks by momentum signal
+top_percentage,0.2
+weighting,equal weight
+transaction_cost_rates,"[0.0, 0.001, 0.002]"

@@ -1,0 +1,9 @@
+selection_item,value
+final_model,Random Forest
+feature_source,daily_ohlcv
+training_scheme,rolling
+selection_rule,top 20% equal-weight portfolio
+reason_1,Best overall out-of-sample Sharpe ratio among the main competitive model family
+reason_2,Best balance of ranking quality and portfolio performance
+reason_3,Improved turnover behavior relative to several alternatives
+reason_4,More reliable out-of-sample generalization than XGBoost and neural models

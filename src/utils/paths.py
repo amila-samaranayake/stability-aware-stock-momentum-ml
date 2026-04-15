@@ -19,9 +19,9 @@ def get_feature_dataset_paths(
     output_root: str = "data/processed",
 ) -> dict:
     """
-    feature_source: 'monthly' or 'daily'
+    feature_source: 'monthly' or 'daily' or 'daily_ohlcv'
     """
-    if feature_source not in {"monthly", "daily"}:
+    if feature_source not in {"monthly", "daily", "daily_ohlcv"}:
         raise ValueError(f"Unsupported feature_source: {feature_source}")
 
     base = Path(output_root) / f"features_{feature_source}"

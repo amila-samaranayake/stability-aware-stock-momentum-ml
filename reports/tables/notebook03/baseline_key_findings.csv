@@ -1,0 +1,6 @@
+finding
+Baseline provides a transparent non-ML benchmark
+Train and test performance can be compared directly
+Turnover level is available through summary metrics
+Transaction costs reduce performance but do not eliminate the benchmark's usefulness
+Later ML models should be evaluated relative to this benchmark

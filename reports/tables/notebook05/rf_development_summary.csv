@@ -1,0 +1,4 @@
+stage,main_observation
+RF daily rolling,Provided a strong tabular benchmark with useful ranking power
+RF daily_ohlcv rolling,"Improved ranking quality, Sharpe ratio, cumulative return, and turnover"
+RF tuning attempts,More regularized tuned variants were informative but did not beat the best untuned daily_ohlcv RF

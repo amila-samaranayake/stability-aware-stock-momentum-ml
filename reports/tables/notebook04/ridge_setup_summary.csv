@@ -1,0 +1,3 @@
+model_variant,feature_source,regularization
+Ridge daily,daily,L2
+Ridge daily_ohlcv,daily_ohlcv,L2

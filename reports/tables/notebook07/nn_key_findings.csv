@@ -1,0 +1,6 @@
+finding
+MLP and LSTM were evaluated with explicit training diagnostics
+Loss curves provided direct visibility into neural model fitting
+MLP daily and MLP daily_ohlcv formed a useful neural tabular comparison
+The LSTM sequence model did not outperform the final Random Forest model
+Neural models remained useful comparison models but were not selected as final models

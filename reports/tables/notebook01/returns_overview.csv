@@ -1,0 +1,5 @@
+dataset,shape,start_date,end_date
+Daily Returns,"(2778, 100)",2015-01-02,2025-12-30
+Monthly Returns,"(132, 100)",2015-01-31,2025-12-31
+Train Monthly,"(120, 100)",2015-01-31,2024-12-31
+Test Monthly,"(12, 100)",2025-01-31,2025-12-31

@@ -1,0 +1,3 @@
+model_variant,feature_source,training_scheme,model_family
+RF daily,daily,rolling,Random Forest
+RF daily_ohlcv,daily_ohlcv,rolling,Random Forest

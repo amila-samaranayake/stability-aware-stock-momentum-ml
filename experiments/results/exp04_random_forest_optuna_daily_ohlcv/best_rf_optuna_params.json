@@ -1,0 +1,22 @@
+{
+    "best_trial_number": 15,
+    "best_objective_value": 0.18059162745580137,
+    "selection_metric": "combined_score",
+    "feature_source": "daily_ohlcv",
+    "n_trials": 40,
+    "n_splits": 5,
+    "best_params": {
+        "RF_N_ESTIMATORS": 300,
+        "RF_MAX_DEPTH": 3,
+        "RF_MIN_SAMPLES_LEAF": 20,
+        "RF_MIN_SAMPLES_SPLIT": 30,
+        "RF_MAX_FEATURES": "sqrt"
+    },
+    "best_user_attrs": {
+        "RMSE_mean": 0.08179962658903155,
+        "DirectionalAccuracy_mean": 0.5171450736144367,
+        "SpearmanRankCorr_mean": 0.007661302300347156,
+        "TopKHitRate_mean": 0.2617348927875244,
+        "CombinedScore_mean": 0.18059162745580137
+    }
+}

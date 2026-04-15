@@ -1,0 +1,6 @@
+stage,handling
+Raw prices,Inspect missingness across tickers
+High-missing tickers,Remove if missingness is too high
+Tiny isolated gaps,Fill conservatively only if gap is very small
+Rolling feature warm-up period,Accept early NaNs due to insufficient lookback history
+Final ML dataset,Drop incomplete rows with missing features/target

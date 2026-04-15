@@ -1,0 +1,3 @@
+model_variant,feature_source,training_scheme,model_family
+XGBoost daily,daily,rolling,XGBoost
+XGBoost daily_ohlcv,daily_ohlcv,rolling,XGBoost

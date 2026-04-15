@@ -1,0 +1,4 @@
+model_variant,input_structure,feature_source,model_family
+MLP daily,tabular engineered features,daily,Neural network
+MLP daily_ohlcv,tabular engineered features + OHLCV,daily_ohlcv,Neural network
+LSTM,sequence input windows,sequence dataset,Neural network

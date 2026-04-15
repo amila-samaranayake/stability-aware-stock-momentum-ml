@@ -1,10 +1,7 @@
-# src/data_download.py
-
 from __future__ import annotations
 
-import os
 from dataclasses import dataclass
-from typing import List, Optional
+from typing import Dict
 
 import pandas as pd
 import yfinance as yf
@@ -16,87 +13,118 @@ class DownloadResult:
     missing_ratio: pd.Series
 
 
+@dataclass
+class OHLCVDownloadResult:
+    ohlcv: pd.DataFrame
+    adj_close: pd.DataFrame
+    missing_ratio_adj_close: pd.Series
+
+
+def save_dataframe(df: pd.DataFrame, path: str) -> None:
+    """
+    Save dataframe to parquet.
+    """
+    df.to_parquet(path)
+
+
+def print_missing_summary(missing_ratio: pd.Series, top_n: int = 20) -> None:
+    """
+    Print missing-value ratios by ticker.
+    """
+    print("\n=== Missing Ratio Summary ===")
+    print(missing_ratio.sort_values(ascending=False).head(top_n))
+
+
 def download_adj_close(
-    tickers: List[str],
+    tickers: list[str],
     start_date: str,
     end_date: str,
     auto_adjust: bool = False,
 ) -> DownloadResult:
     """
-    Download Adjusted Close prices for given tickers from Yahoo Finance.
-
-    Parameters
-    ----------
-    tickers : List[str]
-        Yahoo Finance tickers (e.g., 'VOD.L', 'AZN.L').
-    start_date : str
-        Inclusive start date in YYYY-MM-DD.
-    end_date : str
-        Inclusive end date in YYYY-MM-DD.
-    auto_adjust : bool
-        If True, yfinance auto-adjusts OHLC. We keep False and use 'Adj Close'.
-
-    Returns
-    -------
-    DownloadResult
-        Contains Adj Close DataFrame (Date index) and missing ratios per ticker.
+    Download adjusted close prices only.
     """
-    if not tickers:
-        raise ValueError("Tickers list is empty.")
-
-    # yfinance supports multiple tickers in one call
-    df = yf.download(
+    data = yf.download(
         tickers=tickers,
         start=start_date,
         end=end_date,
-        group_by="column",
         auto_adjust=auto_adjust,
         progress=False,
-        threads=True,
+        group_by="column",
     )
 
-    # When multiple tickers: columns are a MultiIndex (field, ticker)
-    # We only want Adjusted Close.
-    if isinstance(df.columns, pd.MultiIndex):
-        if ("Adj Close" not in df.columns.get_level_values(0)) and ("Close" in df.columns.get_level_values(0)):
-            # Fallback if Adj Close is missing
-            adj = df["Close"].copy()
+    if isinstance(data.columns, pd.MultiIndex):
+        if "Adj Close" in data.columns.get_level_values(0):
+            adj_close = data["Adj Close"].copy()
+        elif "Close" in data.columns.get_level_values(0):
+            adj_close = data["Close"].copy()
         else:
-            adj = df["Adj Close"].copy()
+            raise ValueError("Could not find 'Adj Close' or 'Close' in downloaded data.")
     else:
-        # Single ticker case: columns are flat
-        col = "Adj Close" if "Adj Close" in df.columns else "Close"
-        adj = df[[col]].copy()
-        # Standardize to have ticker as column name if possible
-        if len(tickers) == 1:
-            adj.columns = [tickers[0]]
+        raise ValueError("Expected MultiIndex columns from yfinance download.")
 
-    # Ensure DateTimeIndex
-    adj.index = pd.to_datetime(adj.index)
+    adj_close.index = pd.to_datetime(adj_close.index)
+    adj_close = adj_close.sort_index()
 
-    # Basic missingness report
-    missing_ratio = adj.isna().mean().sort_values(ascending=False)
+    missing_ratio = adj_close.isna().mean()
 
-    return DownloadResult(adj_close=adj, missing_ratio=missing_ratio)
+    return DownloadResult(
+        adj_close=adj_close,
+        missing_ratio=missing_ratio,
+    )
 
 
-def save_dataframe(df: pd.DataFrame, filepath: str) -> None:
+def download_ohlcv(
+    tickers: list[str],
+    start_date: str,
+    end_date: str,
+    auto_adjust: bool = False,
+) -> OHLCVDownloadResult:
     """
-    Save a dataframe to parquet (preferred) or csv based on file extension.
+    Download full OHLCV data and also extract adjusted close.
+
+    Output format:
+    - ohlcv: MultiIndex columns (field, ticker)
+      fields expected: Open, High, Low, Close, Adj Close, Volume
+    - adj_close: flat ticker columns
     """
-    os.makedirs(os.path.dirname(filepath), exist_ok=True)
-    if filepath.endswith(".parquet"):
-        df.to_parquet(filepath)
-    elif filepath.endswith(".csv"):
-        df.to_csv(filepath, index=True)
+    data = yf.download(
+        tickers=tickers,
+        start=start_date,
+        end=end_date,
+        auto_adjust=auto_adjust,
+        progress=False,
+        group_by="column",
+    )
+
+    if not isinstance(data.columns, pd.MultiIndex):
+        raise ValueError("Expected MultiIndex columns from yfinance download.")
+
+    available_fields = list(pd.Index(data.columns.get_level_values(0)).unique())
+
+    required_base_fields = ["Open", "High", "Low", "Close", "Volume"]
+    missing_base_fields = [f for f in required_base_fields if f not in available_fields]
+    if missing_base_fields:
+        raise ValueError(f"Missing required OHLCV fields: {missing_base_fields}")
+
+    if "Adj Close" in available_fields:
+        adj_close = data["Adj Close"].copy()
     else:
-        raise ValueError("Unsupported file format. Use .parquet or .csv")
+        adj_close = data["Close"].copy()
 
+    desired_fields = [f for f in ["Open", "High", "Low", "Close", "Adj Close", "Volume"] if f in available_fields]
+    ohlcv = data[desired_fields].copy()
 
-def print_missing_summary(missing_ratio: pd.Series, top_n: int = 10) -> None:
-    """
-    Print a quick missing data summary.
-    """
-    print("\nMissing ratio (top offenders):")
-    print(missing_ratio.head(top_n))
-    print(f"\nTickers with >10% missing: {(missing_ratio > 0.10).sum()}")
+    ohlcv.index = pd.to_datetime(ohlcv.index)
+    ohlcv = ohlcv.sort_index()
+
+    adj_close.index = pd.to_datetime(adj_close.index)
+    adj_close = adj_close.sort_index()
+
+    missing_ratio_adj_close = adj_close.isna().mean()
+
+    return OHLCVDownloadResult(
+        ohlcv=ohlcv,
+        adj_close=adj_close,
+        missing_ratio_adj_close=missing_ratio_adj_close,
+    )

@@ -1,0 +1,6 @@
+finding
+"The final comparison includes benchmark, linear, tree-based, and neural model families"
+Exact return prediction remained difficult across all models
+Ranking quality and portfolio performance were more informative than R² alone
+The OHLCV feature extension helped the final Random Forest model most clearly
+The rolling Random Forest with daily_ohlcv features was selected as the final model
