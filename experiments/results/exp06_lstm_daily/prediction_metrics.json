@@ -1,27 +1,27 @@
 {
     "train": {
         "regression": {
-            "MAE": 0.057888069483474004,
-            "RMSE": 0.07929137745704531,
-            "R2": 0.06290446095265956,
-            "Directional_Accuracy": 0.5486933634141756
+            "MAE": 0.057903555162032466,
+            "RMSE": 0.07934151704664433,
+            "R2": 0.06168306148452407,
+            "Directional_Accuracy": 0.5551795450272607
         },
         "ranking": {
-            "SpearmanRankCorr_mean": 0.001098588968074998,
-            "TopKHitRate_mean": 0.2078373015873016,
+            "SpearmanRankCorr_mean": -0.0012539973166562407,
+            "TopKHitRate_mean": 0.20513001253132832,
             "Months_evaluated": 112
         }
     },
     "test_2025": {
         "regression": {
-            "MAE": 0.05474415935370218,
-            "RMSE": 0.07435340467568001,
-            "R2": -0.001578027302252094,
-            "Directional_Accuracy": 0.5445544554455446
+            "MAE": 0.05475735243137276,
+            "RMSE": 0.07433960677755674,
+            "R2": -0.001352182159055415,
+            "Directional_Accuracy": 0.5514851485148515
         },
         "ranking": {
-            "SpearmanRankCorr_mean": 0.03270771091399501,
-            "TopKHitRate_mean": 0.20148856990962252,
+            "SpearmanRankCorr_mean": 0.021651980647333178,
+            "TopKHitRate_mean": 0.19670388091440724,
             "Months_evaluated": 11
         }
     }

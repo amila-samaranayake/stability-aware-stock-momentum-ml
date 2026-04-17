@@ -1,32 +1,32 @@
 {
     "cost_0bps": {
-        "cumulative_return": 0.13233509242311903,
-        "annualized_return": 0.13233509242311903,
-        "annualized_volatility": 0.08652118161481061,
-        "max_drawdown": -0.03924515564137421,
-        "sharpe_ratio": 1.4831093164592595,
-        "avg_turnover": 0.7,
-        "median_turnover": 0.8,
+        "cumulative_return": 0.16931614437065812,
+        "annualized_return": 0.16931614437065812,
+        "annualized_volatility": 0.0885444306336424,
+        "max_drawdown": -0.03911231841693841,
+        "sharpe_ratio": 1.818266767213506,
+        "avg_turnover": 0.6727272727272727,
+        "median_turnover": 0.7,
         "max_turnover": 0.9
     },
     "cost_10bps": {
-        "cumulative_return": 0.12375402569683014,
-        "annualized_return": 0.12375402569683014,
-        "annualized_volatility": 0.08628322668837884,
-        "max_drawdown": -0.039895155641374136,
-        "sharpe_ratio": 1.3979585042597293,
-        "avg_turnover": 0.7,
-        "median_turnover": 0.8,
+        "cumulative_return": 0.16083044962630288,
+        "annualized_return": 0.16083044962630288,
+        "annualized_volatility": 0.08822119853240035,
+        "max_drawdown": -0.03976231841693845,
+        "sharpe_ratio": 1.7410486164114276,
+        "avg_turnover": 0.6727272727272727,
+        "median_turnover": 0.7,
         "max_turnover": 0.9
     },
     "cost_20bps": {
-        "cumulative_return": 0.11523142472242576,
-        "annualized_return": 0.11523142472242576,
-        "annualized_volatility": 0.08605835811842305,
-        "max_drawdown": -0.040545155641374175,
-        "sharpe_ratio": 1.312137170553521,
-        "avg_turnover": 0.7,
-        "median_turnover": 0.8,
+        "cumulative_return": 0.15240011910481743,
+        "annualized_return": 0.15240011910481743,
+        "annualized_volatility": 0.08790927088986035,
+        "max_drawdown": -0.040412318416938375,
+        "sharpe_ratio": 1.6630486655515675,
+        "avg_turnover": 0.6727272727272727,
+        "median_turnover": 0.7,
         "max_turnover": 0.9
     }
 }
