@@ -1,9 +1,9 @@
 {
-    "cumulative_return": 2.0595852952904217,
-    "annualized_return": 0.11832042390573694,
-    "annualized_volatility": 0.21122198521309615,
-    "max_drawdown": -0.36061654819464417,
-    "sharpe_ratio": 0.6376352597022429,
+    "cumulative_return": 2.0595841656178413,
+    "annualized_return": 0.11832038261464661,
+    "annualized_volatility": 0.2112219961977204,
+    "max_drawdown": -0.3606165665713944,
+    "sharpe_ratio": 0.6376350610344289,
     "avg_turnover": 0.3963302752293578,
     "median_turnover": 0.4,
     "max_turnover": 0.7

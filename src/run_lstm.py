@@ -47,8 +47,8 @@ EQUITY_TEST_PATH = RESULTS_DIR / "equity_test_2025.csv"
 PRED_METRICS_PATH = RESULTS_DIR / "prediction_metrics.json"
 TRAINING_HISTORY_PATH = RESULTS_DIR / "training_history.json"
 
-PRED_TRAIN_PATH = RESULTS_DIR / "predictions_train.csv"
-PRED_TEST_PATH = RESULTS_DIR / "predictions_test_2025.csv"
+TRAIN_PREDICTIONS_PATH = RESULTS_DIR / "train_predictions.csv"
+TEST_PREDICTIONS_PATH = RESULTS_DIR / "test_predictions.csv"
 
 LOSS_CURVE_PATH = RESULTS_DIR / "loss_curve.png"
 PRED_SCATTER_TRAIN_PATH = RESULTS_DIR / "pred_vs_actual_train.png"
@@ -171,6 +171,36 @@ def build_prediction_dataframe(
     return out.sort_index()
 
 
+def save_prediction_table(
+    df_pred: pd.DataFrame,
+    target_col: str,
+    out_path: Path,
+    pred_col: str = "pred_return",
+) -> None:
+    """
+    Save standardized prediction table for downstream diagnostics.
+
+    Output columns:
+    - date
+    - ticker
+    - pred_return
+    - target_col
+    """
+    if not isinstance(df_pred.index, pd.MultiIndex):
+        raise ValueError("df_pred must be indexed by (date, ticker).")
+
+    out = df_pred[[target_col, pred_col]].copy().reset_index()
+
+    expected_cols = {"date", "ticker", target_col, pred_col}
+    missing = expected_cols - set(out.columns)
+    if missing:
+        raise ValueError(
+            f"Prediction table is missing required columns after reset_index: {sorted(missing)}"
+        )
+
+    out.to_csv(out_path, index=False)
+
+
 def plot_loss_curve(history: dict, save_path: Path) -> None:
     """
     Plot training and validation loss curves.
@@ -254,8 +284,18 @@ def main() -> None:
     pred_train = build_prediction_dataframe(train_meta, pred_train_values, pred_col="pred_return")
     pred_test = build_prediction_dataframe(test_meta, pred_test_values, pred_col="pred_return")
 
-    pred_train.to_csv(PRED_TRAIN_PATH)
-    pred_test.to_csv(PRED_TEST_PATH)
+    save_prediction_table(
+        df_pred=pred_train,
+        target_col=target_col,
+        out_path=TRAIN_PREDICTIONS_PATH,
+        pred_col="pred_return",
+    )
+    save_prediction_table(
+        df_pred=pred_test,
+        target_col=target_col,
+        out_path=TEST_PREDICTIONS_PATH,
+        pred_col="pred_return",
+    )
 
     plot_prediction_scatter(
         pred_train,
@@ -343,6 +383,8 @@ def main() -> None:
         json.dump(cost_results_test, f, indent=4)
 
     print("\n=== LSTM experiment saved to:", RESULTS_DIR)
+    print(f"Saved train predictions -> {TRAIN_PREDICTIONS_PATH}")
+    print(f"Saved test predictions  -> {TEST_PREDICTIONS_PATH}")
 
     print("\nSaved plots:")
     print("Loss curve ->", LOSS_CURVE_PATH)

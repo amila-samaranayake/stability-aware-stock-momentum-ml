@@ -43,6 +43,9 @@ EQUITY_TRAIN_PATH = os.path.join(RESULTS_DIR, "equity_train.csv")
 EQUITY_TEST_PATH = os.path.join(RESULTS_DIR, "equity_test_2025.csv")
 PRED_METRICS_PATH = os.path.join(RESULTS_DIR, "prediction_metrics.json")
 
+TRAIN_PREDICTIONS_PATH = os.path.join(RESULTS_DIR, "train_predictions.csv")
+TEST_PREDICTIONS_PATH = os.path.join(RESULTS_DIR, "test_predictions.csv")
+
 
 def predictions_to_weights(pred_long: pd.DataFrame, top_pct: float) -> pd.DataFrame:
     """
@@ -138,6 +141,36 @@ def compute_cost_adjusted_results(
     return turnover_series, cost_results
 
 
+def save_prediction_table(
+    df_pred: pd.DataFrame,
+    target_col: str,
+    out_path: str,
+    pred_col: str = "pred_return",
+) -> None:
+    """
+    Save standardized prediction table for downstream diagnostics.
+
+    Output columns:
+    - date
+    - ticker
+    - pred_return
+    - target_col
+    """
+    if not isinstance(df_pred.index, pd.MultiIndex):
+        raise ValueError("df_pred must be indexed by (date, ticker).")
+
+    out = df_pred[[target_col, pred_col]].copy().reset_index()
+
+    expected_cols = {"date", "ticker", target_col, pred_col}
+    missing = expected_cols - set(out.columns)
+    if missing:
+        raise ValueError(
+            f"Prediction table is missing required columns after reset_index: {sorted(missing)}"
+        )
+
+    out.to_csv(out_path, index=False)
+
+
 def main() -> None:
     """
     Run Ridge regression on the selected feature dataset, evaluate predictions,
@@ -172,6 +205,19 @@ def main() -> None:
 
     pred_train = predict_returns(artifacts, ml_train, pred_col="pred_return")
     pred_test = predict_returns(artifacts, ml_test, pred_col="pred_return")
+
+    save_prediction_table(
+        df_pred=pred_train,
+        target_col=target_col,
+        out_path=TRAIN_PREDICTIONS_PATH,
+        pred_col="pred_return",
+    )
+    save_prediction_table(
+        df_pred=pred_test,
+        target_col=target_col,
+        out_path=TEST_PREDICTIONS_PATH,
+        pred_col="pred_return",
+    )
 
     acc_train = regression_prediction_metrics(pred_train, target_col=target_col, pred_col="pred_return")
     acc_test = regression_prediction_metrics(pred_test, target_col=target_col, pred_col="pred_return")
@@ -244,6 +290,8 @@ def main() -> None:
         json.dump(cost_results_test, f, indent=4)
 
     print("\n=== Ridge experiment saved to:", RESULTS_DIR)
+    print(f"Saved train predictions -> {TRAIN_PREDICTIONS_PATH}")
+    print(f"Saved test predictions  -> {TEST_PREDICTIONS_PATH}")
 
     print("\n=== TRAIN STRATEGY METRICS (2015–2024) ===")
     for k, v in metrics_train.items():

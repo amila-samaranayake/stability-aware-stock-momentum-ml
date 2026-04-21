@@ -367,7 +367,8 @@ def plot_metric_bar(
         for label in labels
     ]
 
-    ax.bar(labels, values.values, color=colors)
+    ax.bar(labels, values.values, color=colors, width=0.1)
+    ax.set_xlim(-0.2, len(labels) - 0.8)
 
     _apply_common_style(ax, title, ylabel, xlabel="")
     plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
@@ -398,7 +399,7 @@ def plot_grouped_metric_bars(
     n_groups = len(metric_df.index)
     n_models = len(metric_df.columns)
     x = np.arange(n_groups)
-    width = 0.8 / max(n_models, 1)
+    width = 0.68 / max(n_models, 1)
 
     for i, model_name in enumerate(metric_df.columns):
         offset = (i - (n_models - 1) / 2) * width

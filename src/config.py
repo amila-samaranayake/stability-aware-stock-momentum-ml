@@ -168,3 +168,17 @@ LSTM_BATCH_SIZE = 64
 LSTM_VALIDATION_FRACTION = 0.15
 LSTM_EARLY_STOPPING_PATIENCE = 10
 LSTM_LR_PATIENCE = 5
+
+# Portfolio Selection Diagnostics
+
+SELECTION_DIAGNOSTICS = {
+    "predictions_path": "experiments/results/exp04_random_forest_rolling_daily_ohlcv/test_predictions.csv",
+    "output_dir": "experiments/results/exp04_random_forest_rolling_daily_ohlcv/selection_diagnostics",
+    "date_col": "date",
+    "ticker_col": "ticker",
+    "pred_col": "pred_return",
+    "actual_col": "y_next_1m",
+    "top_frac": 0.2,
+    "bottom_frac": 0.2,
+    "higher_is_better": True,
+}
