@@ -19,12 +19,27 @@ class PlotStyleConfig:
     """
     Central plotting configuration used across all notebooks and scripts.
     """
-    figsize: tuple[float, float] = (11, 6)
+    # figsize: tuple[float, float] = (11, 6)
+    # dpi: int = 300
+    # title_size: int = 15
+    # label_size: int = 12
+    # tick_size: int = 10
+    # legend_size: int = 10
+    # linewidth: float = 2.2
+    # grid_alpha: float = 0.45
+    # grid_linewidth: float = 0.6
+    # grid_linestyle: str = "--"
+    # scatter_alpha: float = 0.65
+    # hist_alpha: float = 0.85
+    # marker_size: int = 28
+    # use_tight_layout: bool = True
+
+    figsize: tuple[float, float] = (5, 4)
     dpi: int = 300
-    title_size: int = 15
-    label_size: int = 12
-    tick_size: int = 10
-    legend_size: int = 10
+    title_size: int = 10
+    label_size: int = 9
+    tick_size: int = 9
+    legend_size: int = 9
     linewidth: float = 2.2
     grid_alpha: float = 0.45
     grid_linewidth: float = 0.6
@@ -33,8 +48,7 @@ class PlotStyleConfig:
     hist_alpha: float = 0.85
     marker_size: int = 28
     use_tight_layout: bool = True
-
-
+    
 STYLE = PlotStyleConfig()
 
 
@@ -366,9 +380,8 @@ def plot_metric_bar(
         color_map[label] if color_map and label in color_map else AUX_COLORS["bar"]
         for label in labels
     ]
-
-    ax.bar(labels, values.values, color=colors, width=0.1)
-    ax.set_xlim(-0.2, len(labels) - 0.8)
+    
+    ax.bar(labels, values.values, color=colors,  width=0.4)
 
     _apply_common_style(ax, title, ylabel, xlabel="")
     plt.setp(ax.get_xticklabels(), rotation=30, ha="right")
@@ -396,18 +409,37 @@ def plot_grouped_metric_bars(
     """
     fig, ax = plt.subplots(figsize=(max(11, 1.8 * len(metric_df.index)), 6))
 
+    # n_groups = len(metric_df.index)
+    # n_models = len(metric_df.columns)
+    # x = np.arange(n_groups)
+    # width = 0.68 / max(n_models, 1)
+
+    # for i, model_name in enumerate(metric_df.columns):
+    #     offset = (i - (n_models - 1) / 2) * width
+    #     color = color_map.get(model_name) if color_map else None
+    #     ax.bar(
+    #         x + offset,
+    #         metric_df[model_name].values,
+    #         width=width,
+    #         label=model_name,
+    #         color=color,
+    #     )
     n_groups = len(metric_df.index)
     n_models = len(metric_df.columns)
+
     x = np.arange(n_groups)
-    width = 0.68 / max(n_models, 1)
+
+    group_span = 0.78
+    slot_width = group_span / max(n_models, 1)
+    bar_width = slot_width * 0.82   # smaller than slot width -> small padding
 
     for i, model_name in enumerate(metric_df.columns):
-        offset = (i - (n_models - 1) / 2) * width
+        offset = (i - (n_models - 1) / 2) * slot_width
         color = color_map.get(model_name) if color_map else None
         ax.bar(
             x + offset,
             metric_df[model_name].values,
-            width=width,
+            width=bar_width,
             label=model_name,
             color=color,
         )

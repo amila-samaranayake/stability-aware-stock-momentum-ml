@@ -172,8 +172,8 @@ LSTM_LR_PATIENCE = 5
 # Portfolio Selection Diagnostics
 
 SELECTION_DIAGNOSTICS = {
-    "predictions_path": "experiments/results/exp04_random_forest_rolling_daily_ohlcv/test_predictions.csv",
-    "output_dir": "experiments/results/exp04_random_forest_rolling_daily_ohlcv/selection_diagnostics",
+    "predictions_path": "experiments/results/exp06_lstm_daily/test_predictions.csv",
+    "output_dir": "experiments/results/exp06_lstm_daily/selection_diagnostics",
     "date_col": "date",
     "ticker_col": "ticker",
     "pred_col": "pred_return",
