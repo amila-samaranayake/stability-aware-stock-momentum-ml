@@ -1,0 +1,3 @@
+dataset,shape,start_date,end_date
+Adjusted Close,"(2778, 100)",2015-01-02,2025-12-30
+OHLCV,"(2778, 600)",2015-01-02,2025-12-30

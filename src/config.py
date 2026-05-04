@@ -15,6 +15,7 @@ TEST_START_DATE = "2025-01-01"
 # DATA
 # =========================
 RAW_ADJ_CLOSE_PATH = "data/raw/adj_close_2015_2025.parquet"
+RAW_OHLCV_PATH = "data/raw/ohlcv_2015_2025.parquet"
 TICKERS = FTSE100_TICKERS
 MARKET_TICKER = None
 
@@ -23,7 +24,7 @@ USE_LOG_RETURNS = False
 # =========================
 # FEATURE SOURCE
 # =========================
-FEATURE_SOURCE = "daily"   # "monthly" or "daily"
+FEATURE_SOURCE = "daily_ohlcv"   # "monthly" or "daily" "daily_ohlcv"
 
 # =========================
 # REBALANCING / PORTFOLIO
@@ -58,6 +59,11 @@ DAILY_DRAWDOWN_WINDOWS = [60]
 DAILY_BETA_WINDOWS = [60]
 DAILY_RSI_WINDOW = 14
 
+DAILY_OHLCV_VOL_WINDOWS = [20, 60]
+DAILY_OHLCV_RANGE_WINDOWS = [5, 20]
+DAILY_OHLCV_ABVOL_WINDOWS = [20]
+DAILY_OHLCV_CLV_WINDOWS = [5, 20]
+
 # =========================
 # SCALING
 # =========================
@@ -90,6 +96,8 @@ RF_MAX_DEPTH_GRID = [4, 6, 8]
 RF_MIN_SAMPLES_LEAF_GRID = [10, 20, 30]
 RF_MIN_SAMPLES_SPLIT_GRID = [20, 40]
 RF_MAX_FEATURES_GRID = ["sqrt", 0.5]
+
+RF_OPTUNA_N_TRIALS = 40
 
 # =========================
 # XGBOOST
@@ -160,3 +168,17 @@ LSTM_BATCH_SIZE = 64
 LSTM_VALIDATION_FRACTION = 0.15
 LSTM_EARLY_STOPPING_PATIENCE = 10
 LSTM_LR_PATIENCE = 5
+
+# Portfolio Selection Diagnostics
+
+SELECTION_DIAGNOSTICS = {
+    "predictions_path": "experiments/results/exp06_lstm_daily/test_predictions.csv",
+    "output_dir": "experiments/results/exp06_lstm_daily/selection_diagnostics",
+    "date_col": "date",
+    "ticker_col": "ticker",
+    "pred_col": "pred_return",
+    "actual_col": "y_next_1m",
+    "top_frac": 0.2,
+    "bottom_frac": 0.2,
+    "higher_is_better": True,
+}

@@ -12,7 +12,7 @@ from src.evaluation.backtest import (
     apply_transaction_costs,
 )
 from src.evaluation.metrics import summarize_metrics, turnover
-from src.plotting import plot_equity_curve, plot_drawdown, plot_turnover
+from src.utils.plotting import plot_equity_curve, plot_drawdown, plot_turnover
 from src.utils.paths import get_processed_returns_paths, get_experiment_dir
 
 

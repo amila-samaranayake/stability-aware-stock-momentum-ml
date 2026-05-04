@@ -1,0 +1,4 @@
+metric,train_2015_2024,test_2025
+avg_turnover,0.20625,0.13749999999999998
+median_turnover,0.2,0.125
+max_turnover,0.55,0.35

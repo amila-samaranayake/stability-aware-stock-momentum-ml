@@ -1,0 +1,6 @@
+finding
+Random Forest became the main model-development focus
+The OHLCV extension improved out-of-sample ranking and portfolio performance
+Feature importance provided useful model interpretability
+Tuning favored conservative settings but did not beat the best untuned daily_ohlcv RF
+RF daily_ohlcv rolling was selected as the final model

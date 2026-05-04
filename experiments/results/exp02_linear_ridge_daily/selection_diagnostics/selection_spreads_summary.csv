@@ -1,0 +1,2 @@
+months_evaluated,mean_top_avg_return,mean_all_avg_return,mean_bottom_avg_return,mean_top_minus_all,mean_all_minus_bottom,mean_top_minus_bottom,pct_months_top_gt_all,pct_months_bottom_lt_all,pct_months_top_gt_bottom
+11,0.024694617073861135,0.01473267969351396,0.011325598357269909,0.009961937380347174,0.0034070813362440475,0.01336901871659122,0.5454545454545454,0.45454545454545453,0.5454545454545454

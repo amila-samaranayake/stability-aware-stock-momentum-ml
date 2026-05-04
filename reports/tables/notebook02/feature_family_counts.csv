@@ -1,0 +1,13 @@
+family,daily,daily_ohlcv
+abnormal_volume,0,1
+close_location_value,0,2
+distance_from_high,1,1
+drawdown,1,1
+intraday_range,0,2
+moving_average_ratio,2,2
+open_close_return,0,1
+return,5,5
+return_spread,2,2
+rsi,1,1
+volatility,3,3
+volume_average,0,2

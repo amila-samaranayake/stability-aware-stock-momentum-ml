@@ -1,0 +1,14 @@
+feature_group,interpretation
+ret_5d / ret_20d / ret_60d / ...,Rolling return over a given lookback window
+vol_20d / vol_60d / ...,Rolling standard deviation of daily returns
+ma_ratio_20_60 / ma_ratio_60_252,Relative position of short and long moving averages
+dist_252d_high,Distance from rolling 252-day high
+drawdown_60d,Recent drawdown proxy
+rsi_14d,Momentum oscillator based on recent gains and losses
+ret_spread_5d_20d,Short-minus-medium return spread
+ret_spread_20d_60d,Medium-minus-long return spread
+volavg_20d / volavg_60d,Rolling average traded volume
+abvol_20d,Current volume relative to recent volume average
+range_5d / range_20d,Average high-low range scaled by price
+clv_5d / clv_20d,Rolling close-location value
+open_close_ret,Open-to-close return

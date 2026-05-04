@@ -1,0 +1,3 @@
+feature_source,train_rows,test_rows,n_train_features,n_test_features
+daily,10418,1024,15,15
+daily_ohlcv,10374,1024,23,23

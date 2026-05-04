@@ -1,0 +1,6 @@
+finding
+Ridge establishes the first supervised-learning benchmark family
+The daily and daily_ohlcv variants can be compared directly
+OHLCV feature extension can be assessed even in a linear setting
+Out-of-sample predictive power remains modest for both Ridge variants
+Later nonlinear models should be judged relative to these linear baselines

@@ -1,0 +1,11 @@
+item,value
+Raw adjusted close shape,"(2778, 100)"
+Raw OHLCV shape,"(2778, 600)"
+Adjusted close date range,2015-01-02 -> 2025-12-30
+OHLCV date range,2015-01-02 -> 2025-12-30
+Daily returns shape,"(2778, 100)"
+Monthly returns shape,"(132, 100)"
+Train monthly shape,"(120, 100)"
+Test monthly shape,"(12, 100)"
+Number of configured tickers,100
+Usable adjusted close tickers,100

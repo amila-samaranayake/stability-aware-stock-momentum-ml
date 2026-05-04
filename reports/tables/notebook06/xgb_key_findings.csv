@@ -1,0 +1,6 @@
+finding
+XGBoost provided a strong nonlinear comparison model
+In-sample fit was stronger than the final selected Random Forest in several cases
+Out-of-sample generalization remained weaker than the best Random Forest variant
+The train-test gap provided evidence of overfitting pressure
+XGBoost was not selected as the final model
