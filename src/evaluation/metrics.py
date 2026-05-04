@@ -58,7 +58,7 @@ def turnover(weights: pd.DataFrame) -> pd.Series:
     Turnover definition (simple, selection-based):
     turnover_t = (# assets removed from portfolio at t) / (portfolio size at t-1)
 
-    We compute using the change in holdings (non-zero weights).
+    Compute using the change in holdings (non-zero weights).
 
     Returns:
     - Series indexed by time (same as weights index), with turnover in [0, 1].

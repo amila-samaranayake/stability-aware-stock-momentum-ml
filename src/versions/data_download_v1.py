@@ -34,7 +34,7 @@ def download_adj_close(
     end_date : str
         Inclusive end date in YYYY-MM-DD.
     auto_adjust : bool
-        If True, yfinance auto-adjusts OHLC. We keep False and use 'Adj Close'.
+        If True, yfinance auto-adjusts OHLC. Keep False and use 'Adj Close'.
 
     Returns
     -------
@@ -56,7 +56,7 @@ def download_adj_close(
     )
 
     # When multiple tickers: columns are a MultiIndex (field, ticker)
-    # We only want Adjusted Close.
+    # Only want Adjusted Close.
     if isinstance(df.columns, pd.MultiIndex):
         if ("Adj Close" not in df.columns.get_level_values(0)) and ("Close" in df.columns.get_level_values(0)):
             # Fallback if Adj Close is missing

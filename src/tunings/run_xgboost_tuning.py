@@ -160,12 +160,12 @@ def make_combined_score(
 
     Higher is better.
 
-    We reward:
+    Reward:
     - Top-k hit rate most
     - directional accuracy second
     - Spearman third
 
-    We lightly penalize RMSE by converting it into a bounded inverse form.
+    Lightly penalize RMSE by converting it into a bounded inverse form.
     """
     rmse_component = 1.0 / (1.0 + rmse_mean)
 
