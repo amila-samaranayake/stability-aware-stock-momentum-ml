@@ -19,6 +19,7 @@ Two tabular feature sets are evaluated:
 LSTM is evaluated separately on a rolling sequence dataset.
 
 The key conclusion is that the **momentum benchmark is very strong when implementation realism is taken into account**, whereas the strongest machine-learning model in out-of-sample portfolio selection is the **Random Forest with Daily+OHLCV features**.
+
 ---
 
 ## Repository highlights
