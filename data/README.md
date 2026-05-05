@@ -1,8 +1,8 @@
 # Stability-Aware Stock Momentum ML
 
-This project investigates whether machine-learning models can improve a simple momentum-based stock-selection strategy once turnover and transaction costs are included.
+The project is an attempt to determine whether machine-learning models can enhance an otherwise simple momentum-based stock-selection strategy once turnover and transaction costs are factored in.
 
-Using daily market data for 100 UK-listed equities from 2015 to 2025, the project frames the task as **monthly cross-sectional stock ranking**. At each month-end, models predict next-month stock returns, rank the stock universe, and form an equal-weight portfolio from the top 20% of predicted stocks.
+The project addresses the task as the **monthly cross-sectional stock ranking** using daily market data of 100 UK-listed equities between 2015 and 2025. Models are used to make the predictions. At the end of every month, predicted quality of the stocks is made at the end of the month, and the stock universe is ranked and an equal weight portfolio of the top 20% of the predicted stocks is formed.
 
 The study compares:
 - a simple momentum benchmark
@@ -14,20 +14,19 @@ The study compares:
 
 Two tabular feature sets are evaluated:
 - **Daily** price-derived features
-- **Daily+OHLCV** features, which add trading-volume and intraday price-structure information
+- **Daily+OHLCV** have features that include trading-volume and intraday price-structure data.
 
 LSTM is evaluated separately on a rolling sequence dataset.
 
-The main finding is that the **momentum benchmark remains very strong once implementation realism is considered**, while **Random Forest with Daily+OHLCV features** is the strongest machine-learning model in out-of-sample portfolio selection.
-
+The key conclusion is that the **momentum benchmark is very strong when implementation realism is taken into account**, whereas the strongest machine-learning model in out-of-sample portfolio selection is the **Random Forest with Daily+OHLCV features**.
 ---
 
 ## Repository highlights
 
 - reproducible pipeline from raw data download to final report-ready figures
-- multiple model families under one consistent evaluation framework
+- a set of model families within a single consistent evaluation setup
 - train/test comparison with turnover and transaction costs
-- portfolio-selection diagnostics beyond forecast error alone
+- diagnostics beyond forecast error of portfolio-selection choices
 - notebooks for EDA, feature engineering, model comparison, and final reporting outputs
 
 ---
@@ -38,7 +37,7 @@ Important folders:
 
 - `data/raw/` → raw downloaded market data
 - `data/processed/` → processed returns and feature datasets
-- `experiments/results/` → experiment outputs from model runs
+- `experiments/results/` → output of experiments (model runs)
 - `reports/tables/` → final notebook-exported tables
 - `reports/figures/` → final notebook-exported plots
 - `src/` → pipeline, feature, model, analysis, and utility code
@@ -47,15 +46,15 @@ Important folders:
 
 ## End-to-End Run Guide
 
-This guide describes the full project workflow from raw data download to final model-comparison notebooks.
+This guide outlines the entire project workflow, starting with raw data download, up to final model-comparison notebooks.
 
-The pipeline is organised so that:
-1. raw and processed data are generated first
-2. feature datasets are built next
-3. model experiments are run after that
+The pipeline is structured in such a way that:
+1. generation of raw and processed data
+2. feature datasets are constructed
+3. running model experiments
 4. diagnostics and final notebooks are run last
 
-This order keeps outputs reproducible and makes it easier to rerun the full project from scratch.
+This order ensures that outputs are reproducible, and it is also easier to rerun the entire project afresh.
 
 ---
 
